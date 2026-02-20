@@ -1,0 +1,36 @@
+{
+    "name": "university-event-management-frontend",
+    "private": true,
+    "version": "1.0.0",
+    "type": "module",
+    "scripts": {
+        "dev:client": "vite",
+        "dev:server": "cd ../backend && mvnw spring-boot:run",
+        "dev": "concurrently \"npm:dev:client\" \"npm:dev:server\"",
+        "build": "vite build",
+        "preview": "vite preview"
+    },
+    "dependencies": {
+        "@emotion/react": "^11.11.4",
+        "@emotion/styled": "^11.11.5",
+        "@mui/icons-material": "^5.15.15",
+        "@mui/material": "^5.15.15",
+        "@mui/x-data-grid": "^7.3.0",
+        "axios": "^1.6.8",
+        "face-api.js": "^0.22.2",
+        "file-saver": "^2.0.5",
+        "html5-qrcode": "^2.3.8",
+        "qrcode.react": "^3.1.0",
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0",
+        "react-router-dom": "^6.23.0",
+        "recharts": "^2.12.6"
+    },
+    "devDependencies": {
+        "@types/react": "^18.2.66",
+        "@types/react-dom": "^18.2.22",
+        "@vitejs/plugin-react": "^4.2.1",
+        "concurrently": "^9.2.1",
+        "vite": "^5.2.0"
+    }
+}

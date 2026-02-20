@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>University Event Management Backend</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        .container {
+            text-align: center;
+            padding: 2rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { margin-bottom: 1rem; color: #1a73e8; }
+        p { margin-bottom: 1.5rem; }
+        a {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #1a73e8;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        a:hover { background-color: #1557b0; }
+        .backend-info {
+            margin-top: 2rem;
+            font-size: 0.9em;
+            color: #666;
+            border-top: 1px solid #eee;
+            padding-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Backend Service Running</h1>
+        <p>This is the API server. For the user interface, please visit:</p>
+        <a href="http://localhost:5173">Go to Frontend Application</a>
+        
+        <div class="backend-info">
+            <p>API Documentation: <a href="/swagger-ui.html" style="background:none; color:#1a73e8; padding:0;">Swagger UI</a></p>
+        </div>
+    </div>
+</body>
+</html>
