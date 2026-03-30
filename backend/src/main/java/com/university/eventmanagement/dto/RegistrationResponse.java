@@ -17,8 +17,10 @@ public class RegistrationResponse {
     private Long userId;
     private String userName;
     private String studentId;
-    private String qrCodeData;
     private LocalDateTime registeredAt;
     private boolean attended;
     private String attendanceStatus; // UPCOMING, PRESENT, ABSENT
+    private String registrationStatus; // CONFIRMED, WAITLISTED, CANCELLED
+    private Integer waitlistPosition; // non-null when WAITLISTED
+    private boolean certificateAvailable;
 }

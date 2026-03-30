@@ -20,11 +20,19 @@ public interface RegistrationRepository extends JpaRepository<Registration, Long
 
     Optional<Registration> findByEventAndUser(Event event, User user);
 
-    Optional<Registration> findByQrCodeData(String qrCodeData);
-
     boolean existsByEventAndUser(Event event, User user);
 
     long countByEvent(Event event);
+
+    long countByEventAndStatus(Event event, com.university.eventmanagement.model.RegistrationStatus status);
+
+    long countByEventAndRegistrationType(Event event, com.university.eventmanagement.model.RegistrationType type);
+
+    Optional<Registration> findFirstByEventAndStatusOrderByRegisteredAtAsc(Event event,
+            com.university.eventmanagement.model.RegistrationStatus status);
+
+    List<Registration> findByEventAndStatusOrderByRegisteredAtAsc(Event event,
+            com.university.eventmanagement.model.RegistrationStatus status);
 
     @Modifying
     @Transactional

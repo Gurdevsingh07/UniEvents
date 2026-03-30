@@ -2,9 +2,14 @@ package com.university.eventmanagement.service;
 
 import com.university.eventmanagement.dto.*;
 import com.university.eventmanagement.exception.*;
-import com.university.eventmanagement.model.Role;
+import com.university.eventmanagement.model.AppRole;
+import com.university.eventmanagement.model.RoleScope;
+import com.university.eventmanagement.model.UserRole;
 import com.university.eventmanagement.model.User;
 import com.university.eventmanagement.repository.UserRepository;
+import com.university.eventmanagement.repository.DepartmentRepository;
+import com.university.eventmanagement.repository.AppRoleRepository;
+import com.university.eventmanagement.model.Department;
 import com.university.eventmanagement.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -24,8 +29,11 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider tokenProvider;
+    private final DepartmentRepository departmentRepository;
+    private final AppRoleRepository appRoleRepository;
     private final FileService fileService;
     private final FaceService faceService;
+    private final PermissionService permissionService;
 
     public AuthResponse login(LoginRequest request) {
         log.info("Login attempt for email: {}", request.getEmail());
@@ -45,9 +53,10 @@ public class AuthService {
                     .id(user.getId())
                     .fullName(user.getFullName())
                     .email(user.getEmail())
-                    .role(user.getRole().name())
+                    .role(user.getPrimaryRoleName())
                     .studentId(user.getStudentId())
                     .profilePicture(user.getProfilePicture())
+                    .permissions(permissionService.getUserPermissions(user.getId()))
                     .build();
         } catch (Exception e) {
             log.error("Login failed for email: {} - Error: {}", request.getEmail(), e.getMessage());
@@ -63,21 +72,36 @@ public class AuthService {
             throw new DuplicateResourceException("Student ID already registered");
         }
 
+        Department dept = null;
+        if (request.getDepartment() != null && !request.getDepartment().trim().isEmpty()) {
+            dept = departmentRepository.findByName(request.getDepartment())
+                    .orElseGet(() -> departmentRepository.save(
+                            Objects.requireNonNull(Department.builder().name(request.getDepartment())
+                                    .code(request.getDepartment().toUpperCase().replaceAll("\\s+", "_")).build())));
+        }
+
         User user = User.builder()
                 .fullName(request.getFullName())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .studentId(request.getStudentId())
-                .department(request.getDepartment())
+                .department(dept)
                 .phone(request.getPhone())
-                .role(Role.STUDENT)
                 .build();
+
+        String roleName = request.getRole() != null ? request.getRole().toUpperCase() : "STUDENT";
+        AppRole role = appRoleRepository.findByName(roleName)
+                .orElseGet(() -> appRoleRepository
+                        .save(Objects.requireNonNull(
+                                AppRole.builder().name(roleName).scope(RoleScope.DEPARTMENT).build())));
+
+        user.getRoles().add(UserRole.builder().user(user).role(role).department(dept).build());
 
         user = Objects.requireNonNull(userRepository.save(user));
 
         if (request.getFaceEmbedding() != null && !request.getFaceEmbedding().isEmpty()) {
             try {
-                faceService.enrollFace(user, request.getFaceEmbedding());
+                faceService.enrollFace(user, request.getFaceEmbedding(), 1.0f, 1.0f, "Signup", "N/A");
             } catch (Exception e) {
                 log.error("Failed to enroll face during registration for user: {}", user.getEmail(), e);
             }
@@ -91,9 +115,10 @@ public class AuthService {
                 .id(user.getId())
                 .fullName(user.getFullName())
                 .email(user.getEmail())
-                .role(user.getRole().name())
+                .role(user.getPrimaryRoleName())
                 .studentId(user.getStudentId())
                 .profilePicture(user.getProfilePicture())
+                .permissions(permissionService.getUserPermissions(user.getId()))
                 .build();
     }
 
@@ -111,11 +136,12 @@ public class AuthService {
                 .fullName(user.getFullName())
                 .email(user.getEmail())
                 .studentId(user.getStudentId())
-                .department(user.getDepartment())
+                .department(user.getDepartment() != null ? user.getDepartment().getName() : null)
                 .phone(user.getPhone())
-                .role(user.getRole().name())
+                .role(user.getPrimaryRoleName())
                 .profilePicture(user.getProfilePicture())
                 .createdAt(user.getCreatedAt().toString())
+                .permissions(permissionService.getUserPermissions(user.getId()))
                 .build();
     }
 

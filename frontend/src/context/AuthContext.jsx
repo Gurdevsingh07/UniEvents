@@ -14,6 +14,19 @@ export const AuthProvider = ({ children }) => {
         const token = localStorage.getItem('token');
         if (stored && token) {
             setUser(JSON.parse(stored));
+
+            // Transparently refresh user profile (including dynamic permissions) in the background
+            api.get('/api/auth/me')
+                .then(res => {
+                    if (res?.data?.data) {
+                        setUser(prev => {
+                            const updated = { ...prev, ...res.data.data, token };
+                            localStorage.setItem('user', JSON.stringify(updated));
+                            return updated;
+                        });
+                    }
+                })
+                .catch(err => console.error("Silently failed to refresh user session", err));
         }
         setLoading(false);
     }, []);

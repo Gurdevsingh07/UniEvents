@@ -7,7 +7,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
+import com.university.eventmanagement.security.RequiresPermission;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -33,14 +33,14 @@ public class EventController {
     }
 
     @GetMapping("/my")
-    @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZER')")
+    @RequiresPermission("ACCESS_VOLUNTEER_PANEL")
     @Operation(summary = "Get events created by current organizer")
     public ResponseEntity<ApiResponse<List<EventResponse>>> getMyEvents() {
         return ResponseEntity.ok(ApiResponse.success(eventService.getMyEvents()));
     }
 
     @GetMapping("/history")
-    @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZER')")
+    @RequiresPermission("ACCESS_VOLUNTEER_PANEL")
     @Operation(summary = "Get event history (Completed & Cancelled)")
     public ResponseEntity<ApiResponse<List<EventResponse>>> getHistoryEvents() {
         return ResponseEntity.ok(ApiResponse.success(eventService.getHistoryEvents()));
@@ -53,21 +53,21 @@ public class EventController {
     }
 
     @GetMapping("/{id}/stats")
-    @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZER')")
+    @RequiresPermission("VIEW_REPORTS")
     @Operation(summary = "Get live attendance stats for an event")
     public ResponseEntity<ApiResponse<EventStatsResponse>> getEventStats(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success(eventService.getEventStats(id)));
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZER')")
+    @RequiresPermission("MANAGE_EVENTS")
     @Operation(summary = "Create a new event")
     public ResponseEntity<ApiResponse<EventResponse>> createEvent(@Valid @RequestBody EventRequest request) {
         return ResponseEntity.ok(ApiResponse.success("Event created successfully", eventService.createEvent(request)));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZER')")
+    @RequiresPermission("MANAGE_EVENTS")
     @Operation(summary = "Update an event")
     public ResponseEntity<ApiResponse<EventResponse>> updateEvent(@PathVariable Long id,
             @Valid @RequestBody EventRequest request) {
@@ -76,25 +76,23 @@ public class EventController {
     }
 
     @PutMapping("/{id}/end")
-    @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZER')")
+    @RequiresPermission("MANAGE_EVENTS")
     @Operation(summary = "End an event manually")
     public ResponseEntity<ApiResponse<EventResponse>> endEvent(@PathVariable Long id) {
-        try {
-            return ResponseEntity.ok(ApiResponse.success("Event ended successfully", eventService.endEvent(id)));
-        } catch (Exception e) {
-            try (java.io.PrintWriter pw = new java.io.PrintWriter(new java.io.FileWriter("error.log", true))) {
-                e.printStackTrace(pw);
-            } catch (java.io.IOException ioe) {
-                // If logging fails, fall back to stderr
-                ioe.printStackTrace();
-            }
-            e.printStackTrace(); // Log to console as well
-            return ResponseEntity.status(500).body(ApiResponse.error("Internal Server Error: " + e.getMessage()));
-        }
+        return ResponseEntity.ok(ApiResponse.success("Event ended successfully", eventService.endEvent(id)));
+    }
+
+    @PatchMapping("/{id}/status")
+    @RequiresPermission("MANAGE_EVENTS")
+    @Operation(summary = "Update event lifecycle status manually")
+    public ResponseEntity<ApiResponse<EventResponse>> updateEventStatus(@PathVariable Long id,
+            @RequestParam String status) {
+        return ResponseEntity.ok(
+                ApiResponse.success("Event status updated successfully", eventService.updateEventStatus(id, status)));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZER')")
+    @RequiresPermission("MANAGE_EVENTS")
     @Operation(summary = "Delete an event")
     public ResponseEntity<ApiResponse<?>> deleteEvent(@PathVariable Long id) {
         eventService.deleteEvent(id);

@@ -16,8 +16,11 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider tokenProvider;
@@ -36,8 +39,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         userDetails, null, userDetails.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-                System.out.println(
-                        "DEBUG: Authenticated user: " + email + " with roles: " + userDetails.getAuthorities());
+                log.debug("Authenticated user: {} with roles: {}", email, userDetails.getAuthorities());
             }
         } catch (Exception ex) {
             logger.error("Could not set user authentication in security context", ex);
@@ -48,10 +50,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private String getJwtFromRequest(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
         if (bearerToken != null) {
-            System.out.println("DEBUG: Authorization Header received: "
-                    + bearerToken.substring(0, Math.min(bearerToken.length(), 20)) + "...");
+            log.debug("Authorization Header received: {}...",
+                    bearerToken.substring(0, Math.min(bearerToken.length(), 20)));
         } else {
-            System.out.println("DEBUG: No Authorization Header found");
+            log.debug("No Authorization Header found");
         }
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);

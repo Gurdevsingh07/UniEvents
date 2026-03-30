@@ -12,7 +12,7 @@ import {
     Alert, Snackbar, Divider, Skeleton, TextField, InputAdornment, MenuItem
 } from '@mui/material';
 import {
-    Event as EventIcon, People, QrCodeScanner, Assessment, Add,
+    Event as EventIcon, People, FaceRetouchingNatural, Assessment, Add,
     CalendarMonth, LocationOn, Visibility, Delete, CheckCircle, Search
 } from '@mui/icons-material';
 
@@ -69,7 +69,18 @@ const OrganizerEvents = () => {
         return events.filter(ev => {
             const matchesSearch = ev.title.toLowerCase().includes(search.toLowerCase()) ||
                 ev.venue?.toLowerCase().includes(search.toLowerCase());
-            const matchesStatus = statusFilter === 'ALL' || ev.status === statusFilter;
+            let matchesStatus = false;
+            if (statusFilter === 'ALL') {
+                matchesStatus = true;
+            } else if (statusFilter === 'UPCOMING') {
+                matchesStatus = ['CREATED', 'REGISTRATION_OPEN', 'REGISTRATION_CLOSED'].includes(ev.status);
+            } else if (statusFilter === 'ONGOING') {
+                matchesStatus = ['ATTENDANCE_ACTIVE', 'ATTENDANCE_PAUSED'].includes(ev.status);
+            } else if (statusFilter === 'COMPLETED') {
+                matchesStatus = ['ATTENDANCE_CLOSED', 'ARCHIVED'].includes(ev.status);
+            } else if (statusFilter === 'CANCELLED') {
+                matchesStatus = ev.status === 'CANCELLED';
+            }
             return matchesSearch && matchesStatus;
         });
     }, [events, search, statusFilter]);
@@ -227,7 +238,7 @@ const OrganizerEvents = () => {
                                     <Divider sx={{ my: 2, borderColor: '#F5F5F5' }} />
 
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1 }}>
-                                        <Button variant="contained" size="small" startIcon={<QrCodeScanner />}
+                                        <Button variant="contained" size="small" startIcon={<FaceRetouchingNatural />}
                                             onClick={() => navigate(`/organizer/scan/${ev.id}`)}
                                             sx={{
                                                 flex: 1, bgcolor: '#212121', color: '#FFF', borderRadius: 1, textTransform: 'none',

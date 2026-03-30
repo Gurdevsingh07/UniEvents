@@ -1,23 +1,49 @@
-# Node
+# ========================
+# Dependencies
+# ========================
 node_modules/
-npm-debug.log
-yarn.lock
-package-lock.json
 
+# ========================
+# Build / Output
+# ========================
+target/
+dist/
+build/
+
+# ========================
 # Environment
+# ========================
 .env
 .env.local
 
+# ========================
+# Database
+# ========================
+*.db
+*.mv.db
+*.trace.db
+
+# ========================
 # Logs
+# ========================
 *.log
 
-# OS
+# ========================
+# Uploads / Generated Files
+# ========================
+uploads/
+maintenance/
+
+# ========================
+# IDE / Editor
+# ========================
+.vscode/
+.idea/
+
+# ========================
+# OS Files
+# ========================
 .DS_Store
 Thumbs.db
 
-# VS Code
-.vscode/
-
-# Sensitive files
-token.txt
-face_embedding.json
+frontend/build_error*.txt

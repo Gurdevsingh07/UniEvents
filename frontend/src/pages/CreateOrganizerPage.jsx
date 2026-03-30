@@ -33,7 +33,7 @@ const CreateOrganizerPage = () => {
             setSnackbar({ open: true, message: 'Organizer created successfully!', severity: 'success' });
             setTimeout(() => navigate('/admin'), 1500);
         } catch (err) {
-            setSnackbar({ open: true, message: err.response?.data?.message || 'Failed', severity: 'error' });
+            setSnackbar({ open: true, message: err.response?.data?.message || 'We could not create the account. Please try again.', severity: 'error' });
         } finally { setLoading(false); }
     };
 
@@ -43,17 +43,14 @@ const CreateOrganizerPage = () => {
                 {/* Premium Header */}
                 <Box sx={{
                     mb: 5, p: 4, borderRadius: 2,
-                    background: 'linear-gradient(135deg, #101010 0%, #1a1a1a 100%)',
+                    bgcolor: '#212121',
                     color: '#FFF', position: 'relative', overflow: 'hidden',
-                    boxShadow: '0 20px 40px rgba(0,0,0,0.15)',
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between'
                 }}>
-                    <Box sx={{ position: 'absolute', top: -50, right: -50, width: 200, height: 200, borderRadius: '50%', background: 'rgba(211, 47, 47, 0.15)', filter: 'blur(50px)', pointerEvents: 'none' }} />
                     <Box sx={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: 3 }}>
                         <Avatar
                             sx={{
-                                width: 80, height: 80, bgcolor: '#D32F2F',
-                                boxShadow: '0 8px 16px rgba(211, 47, 47, 0.4)'
+                                width: 80, height: 80, bgcolor: '#D32F2F'
                             }}
                         >
                             <Person sx={{ fontSize: 40 }} />
@@ -72,8 +69,8 @@ const CreateOrganizerPage = () => {
                 {/* Form Card */}
                 <Card sx={{
                     maxWidth: 700, mx: 'auto', borderRadius: 3,
-                    boxShadow: '0 10px 40px -10px rgba(0,0,0,0.1)',
-                    border: '1px solid rgba(0,0,0,0.05)',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                    border: '1px solid #E0E0E0',
                     overflow: 'visible'
                 }}>
                     <CardContent sx={{ p: '40px !important' }}>
@@ -162,12 +159,10 @@ const CreateOrganizerPage = () => {
                                             fontSize: '1rem',
                                             fontWeight: 700,
                                             borderRadius: 2,
-                                            background: 'linear-gradient(45deg, #D32F2F 30%, #FF5252 90%)',
-                                            boxShadow: '0 6px 20px rgba(211, 47, 47, 0.3)',
-                                            transition: 'transform 0.2s',
+                                            bgcolor: '#D32F2F',
+                                            transition: 'background-color 0.2s ease',
                                             '&:hover': {
-                                                transform: 'translateY(-2px)',
-                                                boxShadow: '0 8px 25px rgba(211, 47, 47, 0.4)'
+                                                bgcolor: '#B71C1C'
                                             }
                                         }}
                                     >

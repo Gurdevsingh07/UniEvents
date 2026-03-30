@@ -11,9 +11,8 @@ import {
 } from '@mui/material';
 import {
     CalendarMonth, AccessTime, LocationOn, People, Person,
-    QrCode, Share, Timer, CheckCircle
+    FaceRetouchingNatural, Share, Timer, CheckCircle
 } from '@mui/icons-material';
-import { QRCodeSVG } from 'qrcode.react';
 
 const EventDetailPage = () => {
     const { id } = useParams();
@@ -38,15 +37,23 @@ const EventDetailPage = () => {
         // But for countdown, we rely on dates.
 
         const updateCountdown = () => {
+            if (!event.eventDate) return;
             const now = new Date();
             const start = new Date(`${event.eventDate}T${event.startTime || '00:00'}`);
-            const end = event.endTime ? new Date(`${event.eventDate}T${event.endTime}`) : null;
+            if (isNaN(start.getTime())) return;
+
+            let end = null;
+            if (event.endTime) {
+                end = new Date(`${event.endDate || event.eventDate}T${event.endTime}`);
+            } else if (event.endDate) {
+                end = new Date(`${event.endDate}T23:59:59`);
+            }
 
             if (now < start) {
                 // Upcoming
                 const diff = start - now;
                 setCountdown(`Starts in ${formatDiff(diff)}`);
-            } else if (end && now < end) {
+            } else if (end && !isNaN(end.getTime()) && now < end) {
                 // Ongoing
                 const diff = end - now;
                 setCountdown(`Ends in ${formatDiff(diff)}`);
@@ -118,16 +125,15 @@ const EventDetailPage = () => {
     };
 
     const isRegistrationClosed = event && (
-        event.status === 'COMPLETED' ||
-        event.status === 'CANCELLED' ||
-        (new Date() >= (event.endTime ? new Date(`${event.eventDate}T${event.endTime}`) : new Date(`${event.eventDate}T${event.startTime}`)))
+        ['ATTENDANCE_CLOSED', 'ARCHIVED', 'CANCELLED'].includes(event.status) ||
+        (new Date() >= (event.endTime ? new Date(`${event.endDate || event.eventDate}T${event.endTime}`) : new Date(`${event.endDate || event.eventDate}T${event.startTime || '23:59:59'}`)))
     );
     const isFull = event && event.registeredCount >= event.capacity;
 
     if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', pt: 20 }}><CircularProgress sx={{ color: '#C62828' }} /></Box>;
     if (!event) return null;
 
-    const capacityPercent = event.capacity > 0 ? (event.registeredCount / event.capacity) * 100 : 0;
+    const capacityPercent = event.capacity ? ((event.registeredCount || 0) / event.capacity) * 100 : 0;
 
     return (
         <Box sx={{ minHeight: '100vh', bgcolor: '#f8fafc' }}>
@@ -152,12 +158,26 @@ const EventDetailPage = () => {
                                     />
                                 )}
                             </Box>
-                            {(user?.role === 'ADMIN' || (user?.role === 'ORGANIZER' && user.id === event.createdBy)) && event.status !== 'COMPLETED' && event.status !== 'CANCELLED' && (
-                                <Button variant="contained" color="error" size="small"
-                                    onClick={() => api.put(`/api/events/${event.id}/end`).then(loadData)}
-                                    sx={{ fontWeight: 800, borderRadius: 3, textTransform: 'none', px: 3 }}>
-                                    End Event Early
-                                </Button>
+                            {(user?.role === 'ADMIN' || (user?.role === 'ORGANIZER' && user.id === event.createdById)) && (
+                                <Stack direction="row" spacing={2}>
+                                    {!['ATTENDANCE_CLOSED', 'ARCHIVED', 'CANCELLED'].includes(event.status) && (
+                                        <>
+                                            <Button variant="contained" sx={{ bgcolor: '#10B981', '&:hover': { bgcolor: '#059669' }, fontWeight: 800, borderRadius: 3, textTransform: 'none', px: 3 }}
+                                                onClick={() => navigate(`/organizer/scan/${event.id}`)}>
+                                                Start Scanning
+                                            </Button>
+                                            <Button variant="outlined" color="error" size="small"
+                                                onClick={() => api.put(`/api/events/${event.id}/end`).then(loadData)}
+                                                sx={{ fontWeight: 800, borderRadius: 3, textTransform: 'none', px: 3 }}>
+                                                End Early
+                                            </Button>
+                                        </>
+                                    )}
+                                    <Button variant="outlined" sx={{ color: '#fff', borderColor: 'rgba(255,255,255,0.3)', '&:hover': { borderColor: '#fff' }, fontWeight: 800, borderRadius: 3, textTransform: 'none', px: 3 }}
+                                        onClick={() => navigate(`/organizer/reports/${event.id}`)}>
+                                        View Reports
+                                    </Button>
+                                </Stack>
                             )}
                         </Box>
 
@@ -243,7 +263,7 @@ const EventDetailPage = () => {
                         </Card>
                     </Grid>
 
-                    {/* Right Side: Registration & QR */}
+                    {/* Right Side: Registration & Entry */}
                     <Grid item xs={12} lg={4}>
                         <Stack spacing={4}>
                             {/* Registration Box */}
@@ -302,30 +322,26 @@ const EventDetailPage = () => {
                                 </CardContent>
                             </Card>
 
-                            {/* Ticket / QR Box */}
+                            {/* Entry Confirmation */}
                             {registration && (
-                                <Card sx={{ borderRadius: 1.5, overflow: 'hidden', border: '1px dashed #cbd5e1', bgcolor: '#fff' }}>
+                                <Card sx={{ borderRadius: 1.5, overflow: 'hidden', border: '1px solid #e8e8e8', bgcolor: '#fff' }}>
                                     <Box sx={{ p: 4, textAlign: 'center' }}>
-                                        <Box sx={{ mb: 3 }}>
-                                            <Typography variant="h6" sx={{ fontWeight: 900, color: '#1e293b' }}>Entry Pass</Typography>
-                                            <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700 }}>REF: {registration.qrCodeData}</Typography>
-                                        </Box>
-                                        <Box sx={{
-                                            p: 3, display: 'inline-block', bgcolor: '#fff',
-                                            borderRadius: 1.5, border: '2px solid #f1f5f9',
-                                            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'
-                                        }}>
-                                            <QRCodeSVG value={registration.qrCodeData} size={220} level="H" />
-                                        </Box>
-                                        <Typography variant="body2" sx={{ mt: 3, color: '#475569', fontWeight: 600, px: 2 }}>
-                                            Present this code to the event coordinator at the venue for check-in.
+                                        <FaceRetouchingNatural sx={{ fontSize: 48, color: '#D32F2F', mb: 2 }} />
+                                        <Typography variant="h6" sx={{ fontWeight: 800, color: '#212121', mb: 0.5 }}>Face Verification Entry</Typography>
+                                        <Typography variant="body2" sx={{ color: '#757575', mb: 3, fontWeight: 600 }}>
+                                            Your face scan will serve as your entry pass at the venue.
                                         </Typography>
+                                        <Box sx={{ p: 2, bgcolor: '#fafafa', borderRadius: 1.5, border: '1px dashed #e0e0e0' }}>
+                                            <Typography variant="caption" sx={{ color: '#9e9e9e', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}>
+                                                Registration Confirmed
+                                            </Typography>
+                                        </Box>
                                     </Box>
-                                    <Box sx={{ py: 2, bgcolor: '#f8fafc', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'center' }}>
+                                    <Box sx={{ py: 2, bgcolor: '#f8fafc', borderTop: '1px solid #f0f0f0', display: 'flex', justifyContent: 'center' }}>
                                         <Stack direction="row" spacing={3}>
                                             <Box sx={{ textAlign: 'center' }}>
-                                                <Typography variant="caption" display="block" color="text.secondary">GATE</Typography>
-                                                <Typography variant="subtitle2" fontWeight={800}>MAIN-A</Typography>
+                                                <Typography variant="caption" display="block" color="text.secondary">METHOD</Typography>
+                                                <Typography variant="subtitle2" fontWeight={800}>FACE SCAN</Typography>
                                             </Box>
                                             <Divider orientation="vertical" flexItem />
                                             <Box sx={{ textAlign: 'center' }}>

@@ -25,7 +25,7 @@ const LoginPage = () => {
             const data = await login(form.email.trim(), form.password.trim());
             navigate(data.role === 'ADMIN' ? '/admin' : data.role === 'ORGANIZER' ? '/organizer' : '/student');
         } catch (err) {
-            setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
+            setError(err.response?.data?.message || 'We could not sign you in. Please check your details.');
         } finally { setLoading(false); }
     };
 

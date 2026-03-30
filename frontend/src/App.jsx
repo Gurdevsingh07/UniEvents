@@ -16,16 +16,22 @@ import AdminDashboard from './pages/AdminDashboard';
 import UserManagement from './pages/UserManagement';
 import CreateEventPage from './pages/CreateEventPage';
 import AttendanceScanPage from './pages/AttendanceScanPage';
+import LiveMonitorPage from './pages/LiveMonitorPage';
 import ReportsPage from './pages/ReportsPage';
 import CreateOrganizerPage from './pages/CreateOrganizerPage';
 import ProfilePage from './pages/ProfilePage';
+import NoticeBoardPage from './pages/NoticeBoardPage';
+import VolunteerDashboard from './pages/VolunteerDashboard';
 
 import StudentRegistrations from './pages/StudentRegistrations';
 import StudentAttendance from './pages/StudentAttendance';
 import OrganizerEvents from './pages/OrganizerEvents';
 import OrganizerHistory from './pages/OrganizerHistory';
+import TeamManagement from './pages/TeamManagement';
+import MyTeamsPage from './pages/MyTeamsPage';
 
 import StudentEvents from './pages/StudentEvents';
+import StudentTeamsPage from './pages/StudentTeamsPage';
 
 function App() {
     return (
@@ -46,17 +52,23 @@ function App() {
                         <Route path="/student/events" element={<ProtectedRoute roles={['STUDENT']}><StudentEvents /></ProtectedRoute>} />
                         <Route path="/student/registrations" element={<ProtectedRoute roles={['STUDENT']}><StudentRegistrations /></ProtectedRoute>} />
                         <Route path="/student/attendance" element={<ProtectedRoute roles={['STUDENT']}><StudentAttendance /></ProtectedRoute>} />
+                        <Route path="/student/notices" element={<ProtectedRoute roles={['STUDENT']}><NoticeBoardPage /></ProtectedRoute>} />
+                        <Route path="/student/teams" element={<ProtectedRoute roles={['STUDENT']}><StudentTeamsPage /></ProtectedRoute>} />
                         <Route path="/student/profile" element={<ProtectedRoute roles={['STUDENT']}><ProfilePage /></ProtectedRoute>} />
 
                         {/* Organizer routes */}
                         <Route path="/organizer" element={<ProtectedRoute roles={['ORGANIZER']}><OrganizerDashboard /></ProtectedRoute>} />
                         <Route path="/organizer/events" element={<ProtectedRoute roles={['ORGANIZER']}><OrganizerEvents /></ProtectedRoute>} />
-                        <Route path="/organizer/history" element={<ProtectedRoute roles={['ORGANIZER']}><OrganizerHistory /></ProtectedRoute>} />
+                        <Route path="/organizer/history" element={<ProtectedRoute roles={['ORGANIZER']} permissions={['canViewLiveStats', 'canManageEvent']}><OrganizerHistory /></ProtectedRoute>} />
                         <Route path="/organizer/create-event" element={<ProtectedRoute roles={['ORGANIZER', 'ADMIN']}><CreateEventPage /></ProtectedRoute>} />
-                        <Route path="/organizer/scan" element={<ProtectedRoute roles={['ORGANIZER', 'ADMIN']}><AttendanceScanPage /></ProtectedRoute>} />
-                        <Route path="/organizer/scan/:eventId" element={<ProtectedRoute roles={['ORGANIZER', 'ADMIN']}><AttendanceScanPage /></ProtectedRoute>} />
-                        <Route path="/organizer/reports/:eventId" element={<ProtectedRoute roles={['ORGANIZER', 'ADMIN']}><ReportsPage /></ProtectedRoute>} />
+                        <Route path="/organizer/scan" element={<ProtectedRoute roles={['ORGANIZER', 'ADMIN']} permissions={['canScanAttendance', 'canManualOverride', 'canViewAttendanceSheet']}><AttendanceScanPage /></ProtectedRoute>} />
+                        <Route path="/organizer/scan/:eventId" element={<ProtectedRoute roles={['ORGANIZER', 'ADMIN']} permissions={['canScanAttendance', 'canManualOverride', 'canViewAttendanceSheet']}><AttendanceScanPage /></ProtectedRoute>} />
+                        <Route path="/organizer/events/:eventId" element={<ProtectedRoute roles={['ORGANIZER', 'ADMIN']} permissions={['canViewLiveStats', 'canManageEvent']}><LiveMonitorPage /></ProtectedRoute>} />
+                        <Route path="/organizer/reports/:eventId" element={<ProtectedRoute roles={['ORGANIZER', 'ADMIN']} permissions={['canViewLiveStats', 'canManageEvent']}><ReportsPage /></ProtectedRoute>} />
+                        <Route path="/organizer/notices" element={<ProtectedRoute roles={['ORGANIZER', 'ADMIN']}><NoticeBoardPage /></ProtectedRoute>} />
                         <Route path="/organizer/profile" element={<ProtectedRoute roles={['ORGANIZER']}><ProfilePage /></ProtectedRoute>} />
+                        <Route path="/organizer/team" element={<ProtectedRoute roles={['ORGANIZER']}><TeamManagement /></ProtectedRoute>} />
+                        <Route path="/organizer/my-teams" element={<ProtectedRoute roles={['ORGANIZER']} permissions={['canManageTeam']}><MyTeamsPage /></ProtectedRoute>} />
 
                         {/* Admin routes */}
                         <Route path="/admin" element={<ProtectedRoute roles={['ADMIN']}><AdminDashboard /></ProtectedRoute>} />
@@ -65,7 +77,11 @@ function App() {
                         <Route path="/admin/users" element={<ProtectedRoute roles={['ADMIN']}><UserManagement /></ProtectedRoute>} />
                         <Route path="/admin/create-organizer" element={<ProtectedRoute roles={['ADMIN']}><CreateOrganizerPage /></ProtectedRoute>} />
                         <Route path="/admin/create-event" element={<ProtectedRoute roles={['ADMIN']}><CreateEventPage /></ProtectedRoute>} />
+                        <Route path="/admin/notices" element={<ProtectedRoute roles={['ADMIN']}><NoticeBoardPage /></ProtectedRoute>} />
                         <Route path="/admin/profile" element={<ProtectedRoute roles={['ADMIN']}><ProfilePage /></ProtectedRoute>} />
+
+                        {/* Volunteer route */}
+                        <Route path="/volunteer" element={<ProtectedRoute roles={['STUDENT', 'ORGANIZER', 'ADMIN']}><VolunteerDashboard /></ProtectedRoute>} />
                     </Routes>
                 </BrowserRouter>
             </AuthProvider>

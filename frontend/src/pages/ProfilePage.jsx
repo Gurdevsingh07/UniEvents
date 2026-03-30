@@ -4,10 +4,12 @@ import api from '../api/axios';
 import DashboardLayout from '../components/DashboardLayout';
 import {
     Box, Typography, Grid, Card, CardContent, Avatar, Chip, Stack,
-    CircularProgress, Divider
+    CircularProgress, Divider, Button, Tooltip, Dialog, DialogTitle,
+    DialogContent, DialogContentText, DialogActions, Snackbar, Alert
 } from '@mui/material';
 import {
-    Email, School, Phone, CalendarMonth, Event, CheckCircle, TrendingUp, Edit, Badge
+    HourglassTop, Cancel, History, People, DeleteForever,
+    Email, Badge, School, Phone, CalendarMonth, Event, CheckCircle, TrendingUp, Edit
 } from '@mui/icons-material';
 
 const ProfilePage = () => {
@@ -15,11 +17,18 @@ const ProfilePage = () => {
     const [profile, setProfile] = useState(null);
     const [registrations, setRegistrations] = useState([]);
     const [attendance, setAttendance] = useState([]);
+    const [roles, setRoles] = useState([]);
+    const [myTeams, setMyTeams] = useState([]);
+    const [deleteBiometricOpen, setDeleteBiometricOpen] = useState(false);
+    const [deleteBiometricLoading, setDeleteBiometricLoading] = useState(false);
+    const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
     useEffect(() => {
         api.get('/api/auth/me').then(r => setProfile(r.data.data)).catch(() => { });
         api.get('/api/registrations/my').then(r => setRegistrations(r.data.data || [])).catch(() => { });
         api.get('/api/attendance/my').then(r => setAttendance(r.data.data || [])).catch(() => { });
+        api.get('/api/roles/my-roles').then(r => setRoles(r.data.data || [])).catch(() => { });
+        api.get('/api/teams/my-teams').then(r => setMyTeams(r.data.data || [])).catch(() => { });
     }, []);
 
     if (!profile) return (
@@ -61,6 +70,60 @@ const ProfilePage = () => {
         } catch (err) {
             console.error("Failed to upload profile picture", err);
         }
+    };
+
+    const handleAcceptRole = async (id) => {
+        try {
+            await api.post(`/api/roles/invitations/${id}/accept`);
+            api.get('/api/roles/my-roles').then(r => setRoles(r.data.data || []));
+        } catch (err) {
+            console.error("Failed to accept role", err);
+        }
+    };
+
+    const handleRejectRole = async (id) => {
+        try {
+            await api.post(`/api/roles/invitations/${id}/reject`);
+            api.get('/api/roles/my-roles').then(r => setRoles(r.data.data || []));
+        } catch (err) {
+            console.error("Failed to decline role", err);
+        }
+    };
+
+    const handleDeleteBiometricData = async () => {
+        setDeleteBiometricLoading(true);
+        try {
+            await api.delete('/api/face/my-data');
+            setSnackbar({ open: true, message: 'Your biometric data has been permanently deleted.', severity: 'success' });
+            // Update profile to mark as unenrolled visually if needed later
+        } catch (err) {
+            console.error('Failed to delete biometric data', err);
+            setSnackbar({ open: true, message: 'Failed to delete biometric data. Please try again.', severity: 'error' });
+        } finally {
+            setDeleteBiometricLoading(false);
+            setDeleteBiometricOpen(false);
+        }
+    };
+
+    const getCountdown = (validUntil) => {
+        if (!validUntil) return null;
+        const diff = new Date(validUntil) - new Date();
+        if (diff <= 0) return 'Expired';
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        if (days > 0) return `Expires in ${days} day${days !== 1 ? 's' : ''}`;
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        return `Expires in ${hours} hour${hours !== 1 ? 's' : ''}`;
+    };
+
+    const pendingRoles = roles.filter(r => r.status === 'PENDING');
+    const activeRoles = roles.filter(r => r.status === 'ACTIVE');
+    const pastRoles = roles.filter(r => r.status === 'EXPIRED' || r.status === 'REJECTED');
+
+    const statusConfig = {
+        PENDING: { label: 'Invitation Pending', color: '#f59e0b', bg: '#f59e0b12', icon: <HourglassTop sx={{ fontSize: 16 }} /> },
+        ACTIVE: { label: 'Active Member', color: '#10B981', bg: '#10B98112', icon: <CheckCircle sx={{ fontSize: 16 }} /> },
+        EXPIRED: { label: 'Membership Ended', color: '#9e9e9e', bg: '#9e9e9e12', icon: <History sx={{ fontSize: 16 }} /> },
+        REJECTED: { label: 'Declined', color: '#D32F2F', bg: '#D32F2F12', icon: <Cancel sx={{ fontSize: 16 }} /> },
     };
 
     return (
@@ -173,13 +236,203 @@ const ProfilePage = () => {
                                         </Box>
                                     ))}
                                 </Stack>
+
+                                <Box sx={{ mt: 4, pt: 3, borderTop: '1px solid #E0E0E0' }}>
+                                    <Typography variant="subtitle2" sx={{ color: '#D32F2F', fontWeight: 600, mb: 1 }}>Privacy Settings</Typography>
+                                    <Typography variant="body2" sx={{ color: '#757575', mb: 2 }}>Manage your biometric data and privacy preferences.</Typography>
+                                    <Button
+                                        variant="outlined"
+                                        color="error"
+                                        startIcon={<DeleteForever />}
+                                        onClick={() => setDeleteBiometricOpen(true)}
+                                        sx={{ borderRadius: 1.5, fontWeight: 600, textTransform: 'none' }}
+                                    >
+                                        Delete My Biometric Data
+                                    </Button>
+                                </Box>
                             </CardContent>
                         </Card>
                     </Grid>
                 </Grid>
+
+                {/* Memberships & Responsibilities */}
+                {roles.length > 0 && (
+                    <Box sx={{ mt: 3 }} className="animate-fade-in-up stagger-3">
+                        <Typography variant="subtitle2" sx={{
+                            color: '#757575', textTransform: 'uppercase', letterSpacing: 1, fontSize: '0.7rem', fontWeight: 600, mb: 2,
+                        }}>Memberships & Responsibilities</Typography>
+
+                        {/* Pending Invitations */}
+                        {pendingRoles.length > 0 && (
+                            <Stack spacing={2} sx={{ mb: 2 }}>
+                                {pendingRoles.map(role => (
+                                    <Card key={role.id} sx={{ borderLeft: '4px solid #f59e0b', borderRadius: 1.5 }}>
+                                        <CardContent sx={{ p: 2.5 }}>
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 1 }}>
+                                                <Box>
+                                                    <Typography variant="body1" sx={{ fontWeight: 700, color: '#212121', mb: 0.5 }}>
+                                                        You've been invited to join {role.clubName || role.departmentName || 'the organization'} as {role.roleName}
+                                                    </Typography>
+                                                    <Stack direction="row" spacing={1} alignItems="center">
+                                                        <Chip
+                                                            icon={statusConfig.PENDING.icon}
+                                                            label={statusConfig.PENDING.label}
+                                                            size="small"
+                                                            sx={{ bgcolor: statusConfig.PENDING.bg, color: statusConfig.PENDING.color, fontWeight: 600 }}
+                                                        />
+                                                        {role.validUntil && (
+                                                            <Typography variant="caption" sx={{ color: '#9e9e9e', fontWeight: 600 }}>
+                                                                {getCountdown(role.validUntil)}
+                                                            </Typography>
+                                                        )}
+                                                    </Stack>
+                                                </Box>
+                                                <Stack direction="row" spacing={1}>
+                                                    <Button variant="contained" size="small" onClick={() => handleAcceptRole(role.id)}
+                                                        sx={{ bgcolor: '#10B981', '&:hover': { bgcolor: '#059669' }, fontWeight: 700, textTransform: 'none', borderRadius: 1 }}>
+                                                        Accept
+                                                    </Button>
+                                                    <Button variant="outlined" size="small" onClick={() => handleRejectRole(role.id)}
+                                                        sx={{ borderColor: '#e0e0e0', color: '#757575', fontWeight: 700, textTransform: 'none', borderRadius: 1 }}>
+                                                        Decline
+                                                    </Button>
+                                                </Stack>
+                                            </Box>
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </Stack>
+                        )}
+
+                        {/* Active Roles */}
+                        {activeRoles.length > 0 && (
+                            <Stack spacing={1.5} sx={{ mb: 2 }}>
+                                {activeRoles.map(role => (
+                                    <Card key={role.id} sx={{ borderLeft: '4px solid #10B981', borderRadius: 1.5 }}>
+                                        <CardContent sx={{ py: 2, px: 2.5 }}>
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <Box>
+                                                    <Typography variant="body2" sx={{ fontWeight: 700, color: '#212121' }}>
+                                                        {role.roleName} — {role.clubName || role.departmentName || 'Global'}
+                                                    </Typography>
+                                                    <Typography variant="caption" sx={{ color: '#757575' }}>
+                                                        {role.validUntil ? `Active until ${new Date(role.validUntil).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : 'Active membership'}
+                                                    </Typography>
+                                                </Box>
+                                                <Chip
+                                                    icon={statusConfig.ACTIVE.icon}
+                                                    label={statusConfig.ACTIVE.label}
+                                                    size="small"
+                                                    sx={{ bgcolor: statusConfig.ACTIVE.bg, color: statusConfig.ACTIVE.color, fontWeight: 600 }}
+                                                />
+                                            </Box>
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </Stack>
+                        )}
+
+                        {/* Past Roles */}
+                        {pastRoles.length > 0 && (
+                            <Stack spacing={1} sx={{ opacity: 0.7 }}>
+                                {pastRoles.map(role => (
+                                    <Card key={role.id} sx={{ borderLeft: `4px solid ${statusConfig[role.status]?.color || '#9e9e9e'}`, borderRadius: 1.5 }}>
+                                        <CardContent sx={{ py: 1.5, px: 2.5 }}>
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <Typography variant="body2" sx={{ color: '#757575', fontWeight: 600 }}>
+                                                    {role.status === 'REJECTED'
+                                                        ? `You declined the invitation for ${role.roleName}`
+                                                        : `${role.roleName} — ${role.clubName || role.departmentName || 'Global'} (Ended)`
+                                                    }
+                                                </Typography>
+                                                <Chip
+                                                    label={statusConfig[role.status]?.label || role.status}
+                                                    size="small"
+                                                    sx={{ bgcolor: statusConfig[role.status]?.bg, color: statusConfig[role.status]?.color, fontWeight: 600, fontSize: '0.65rem' }}
+                                                />
+                                            </Box>
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </Stack>
+                        )}
+                    </Box>
+                )}
+
+                {/* Dynamic Team Memberships */}
+                {myTeams.length > 0 && (
+                    <Box sx={{ mt: 3 }} className="animate-fade-in-up stagger-4">
+                        <Typography variant="subtitle2" sx={{
+                            color: '#757575', textTransform: 'uppercase', letterSpacing: 1, fontSize: '0.7rem', fontWeight: 600, mb: 2,
+                        }}>My Teams</Typography>
+                        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                            {myTeams.map(team => (
+                                <Chip
+                                    key={team.id}
+                                    icon={<People sx={{ fontSize: 16 }} />}
+                                    label={team.name}
+                                    sx={{
+                                        fontWeight: 600, fontSize: '0.8rem', py: 2.5, px: 0.5,
+                                        bgcolor: 'rgba(198,40,40,0.06)', color: '#C62828',
+                                        border: '1px solid rgba(198,40,40,0.15)',
+                                        '& .MuiChip-icon': { color: '#C62828' },
+                                    }}
+                                />
+                            ))}
+                        </Stack>
+                    </Box>
+                )}
             </Box>
+
+            <Dialog
+                open={deleteBiometricOpen}
+                onClose={() => !deleteBiometricLoading && setDeleteBiometricOpen(false)}
+                PaperProps={{ sx: { borderRadius: 2, p: 1 } }}
+            >
+                <DialogTitle sx={{ fontWeight: 800, color: '#C62828', display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <DeleteForever /> Delete Biometric Data
+                </DialogTitle>
+                <DialogContent>
+                    <DialogContentText sx={{ color: '#424242', fontWeight: 500 }}>
+                        Are you sure you want to permanently delete your facial scan data?
+                    </DialogContentText>
+                    <DialogContentText sx={{ color: '#757575', mt: 1, fontSize: '0.85rem' }}>
+                        This action cannot be undone. You will need to re-enroll your face to use the fast check-in feature at future events.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions sx={{ p: 2, pt: 0 }}>
+                    <Button
+                        onClick={() => setDeleteBiometricOpen(false)}
+                        disabled={deleteBiometricLoading}
+                        sx={{ color: '#757575', fontWeight: 600 }}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleDeleteBiometricData}
+                        color="error"
+                        variant="contained"
+                        disabled={deleteBiometricLoading}
+                        sx={{ fontWeight: 700, borderRadius: 1.5 }}
+                    >
+                        {deleteBiometricLoading ? <CircularProgress size={24} color="inherit" /> : 'Yes, Delete Data'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={6000}
+                onClose={() => setSnackbar({ ...snackbar, open: false })}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            >
+                <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} sx={{ width: '100%', borderRadius: 1.5, fontWeight: 600 }}>
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
         </DashboardLayout>
     );
 };
+
 
 export default ProfilePage;

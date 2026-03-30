@@ -9,5 +9,5 @@ import lombok.*;
 public class CheckInRequest {
     private Long eventId;
     private String studentId;
-    private String qrCodeData;
+    private String sessionToken;
 }

@@ -1,6 +1,5 @@
 package com.university.eventmanagement.dto;
 
-import com.university.eventmanagement.model.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -27,5 +26,5 @@ public class UpdateUserRequest {
     @Size(max = 15)
     private String phone;
 
-    private Role role;
+    private String role;
 }

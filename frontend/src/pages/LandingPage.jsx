@@ -9,7 +9,7 @@ import {
     Divider
 } from '@mui/material';
 import {
-    QrCodeScanner, Assessment, Speed, CalendarMonth,
+    FaceRetouchingNatural, Assessment, Speed, CalendarMonth,
     LocationOn, ArrowForward, People, Shield, School
 } from '@mui/icons-material';
 
@@ -52,7 +52,7 @@ const LandingPage = () => {
     const attendanceCounter = useCountUp(95);
 
     const features = [
-        { icon: <QrCodeScanner sx={{ fontSize: 36 }} />, title: 'QR Check-in', desc: 'Instant attendance verification with a single scan. No more paper sign-ins.' },
+        { icon: <FaceRetouchingNatural sx={{ fontSize: 36 }} />, title: 'Face Check-in', desc: 'Instant attendance verification with face recognition. No more paper sign-ins.' },
         { icon: <Assessment sx={{ fontSize: 36 }} />, title: 'Real-time Reports', desc: 'Generate PDF & Excel reports instantly with attendance analytics.' },
         { icon: <Speed sx={{ fontSize: 36 }} />, title: 'Live Dashboard', desc: 'Monitor registrations, check-ins, and event performance in real-time.' },
         { icon: <Shield sx={{ fontSize: 36 }} />, title: 'Secure & Reliable', desc: 'Built with robust authentication and role-based access control.' },
@@ -63,38 +63,38 @@ const LandingPage = () => {
             <Navbar />
 
             {/* Hero */}
-            <Box sx={{ pt: { xs: 14, md: 18 }, pb: { xs: 8, md: 12 }, px: 2, textAlign: 'center', bgcolor: '#FFFFFF', borderBottom: '1px solid #E0E0E0' }}>
+            <Box sx={{ pt: { xs: 16, md: 22 }, pb: { xs: 10, md: 16 }, px: 2, textAlign: 'center', bgcolor: '#FFFFFF', borderBottom: '1px solid #E0E0E0' }}>
                 <Container maxWidth="md">
                     <Chip icon={<School sx={{ fontSize: 16 }} />} label="University Event Management" className="animate-fade-in-up" sx={{
-                        mb: 3, bgcolor: '#FAFAFA', color: '#212121', fontWeight: 600, border: '1px solid #E0E0E0', borderRadius: 1,
+                        mb: 4, bgcolor: '#FAFAFA', color: '#212121', fontWeight: 700, border: '1px solid #E0E0E0', borderRadius: 1, px: 1,
                     }} />
-                    <Typography variant="h2" component="h1" className="animate-fade-in-up stagger-1" sx={{
-                        fontSize: { xs: '2rem', md: '3.2rem' }, fontWeight: 800, mb: 2.5, lineHeight: 1.15, color: '#212121',
+                    <Typography variant="h1" component="h1" className="animate-fade-in-up stagger-1" sx={{
+                        fontSize: { xs: '2.25rem', sm: '3rem', md: '4rem' }, fontWeight: 800, mb: 3, lineHeight: { xs: 1.2, md: 1.1 }, color: '#212121',
                     }}>
                         Simplify Event Management.{' '}
                         <Box component="span" sx={{ color: '#C62828' }}>Build Engagement.</Box>
                     </Typography>
                     <Typography variant="h6" className="animate-fade-in-up stagger-2" sx={{
-                        color: '#757575', mb: 4, fontWeight: 400, maxWidth: 580, mx: 'auto',
-                        fontSize: { xs: '1rem', md: '1.1rem' }, lineHeight: 1.7,
+                        color: '#6b7280', mb: 6, fontWeight: 400, maxWidth: 640, mx: 'auto',
+                        fontSize: { xs: '1rem', md: '1.25rem' }, lineHeight: 1.6,
                     }}>
-                        Replace manual registers with instant QR-code scanning, real-time dashboards, and automated reports — all in one platform.
+                        Replace manual registers with face-based check-ins, real-time dashboards, and automated reports — all in one platform.
                     </Typography>
-                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center" className="animate-fade-in-up stagger-3">
+                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2.5} justifyContent="center" className="animate-fade-in-up stagger-3">
                         {user ? (
                             <Button variant="contained" size="large" endIcon={<ArrowForward />}
                                 onClick={() => navigate(user.role === 'ADMIN' ? '/admin' : user.role === 'ORGANIZER' ? '/organizer' : '/student')}
-                                sx={{ px: 4, py: 1.5, bgcolor: '#C62828', '&:hover': { bgcolor: '#B71C1C' } }}>
+                                sx={{ px: 5, py: 2, bgcolor: '#C62828', '&:hover': { bgcolor: '#B71C1C' }, fontSize: '1.05rem' }}>
                                 Go to Dashboard
                             </Button>
                         ) : (
                             <>
                                 <Button variant="contained" size="large" component={Link} to="/register"
-                                    endIcon={<ArrowForward />} sx={{ px: 4, py: 1.5, bgcolor: '#C62828', '&:hover': { bgcolor: '#B71C1C' } }}>
+                                    endIcon={<ArrowForward />} sx={{ px: 5, py: 2, bgcolor: '#C62828', '&:hover': { bgcolor: '#B71C1C' }, fontSize: '1.05rem' }}>
                                     Get Started Free
                                 </Button>
                                 <Button variant="outlined" size="large" component={Link} to="/login"
-                                    sx={{ px: 4, py: 1.5, borderColor: '#757575', color: '#757575', '&:hover': { borderColor: '#C62828', color: '#C62828' } }}>
+                                    sx={{ px: 5, py: 2, borderColor: '#757575', color: '#757575', '&:hover': { borderColor: '#C62828', color: '#C62828' }, fontSize: '1.05rem' }}>
                                     Sign In
                                 </Button>
                             </>
@@ -120,25 +120,25 @@ const LandingPage = () => {
             </Box>
 
             {/* Features */}
-            <Container maxWidth="lg" sx={{ py: { xs: 8, md: 12 } }}>
-                <Typography variant="h4" textAlign="center" sx={{ mb: 1, fontWeight: 700, color: '#212121' }}>
+            <Container maxWidth="lg" sx={{ py: { xs: 10, md: 16 } }}>
+                <Typography variant="h3" textAlign="center" sx={{ mb: 1.5, fontWeight: 800, color: '#212121' }}>
                     Everything you need
                 </Typography>
-                <Typography variant="body1" textAlign="center" sx={{ color: '#757575', mb: 6, maxWidth: 480, mx: 'auto' }}>
+                <Typography variant="body1" textAlign="center" sx={{ color: '#6b7280', mb: 8, maxWidth: 520, mx: 'auto', fontSize: '1.1rem' }}>
                     A complete toolkit for organizing, managing, and tracking university events.
                 </Typography>
-                <Grid container spacing={3}>
+                <Grid container spacing={4}>
                     {features.map((f, i) => (
                         <Grid item xs={12} sm={6} md={3} key={i} className={`animate-fade-in-up stagger-${i + 1}`}>
-                            <Card className="hover-lift" sx={{ height: '100%', cursor: 'default', border: '1px solid #E0E0E0', borderRadius: 1.5 }}>
-                                <CardContent sx={{ textAlign: 'center', py: 4, px: 2.5 }}>
+                            <Card className="hover-lift" sx={{ height: '100%', cursor: 'default', border: '1px solid #E0E0E0', borderRadius: 1.5, py: 2 }}>
+                                <CardContent sx={{ textAlign: 'center', px: 3 }}>
                                     <Box sx={{
-                                        color: '#C62828', mb: 2, width: 60, height: 60, borderRadius: 1.5,
+                                        color: '#C62828', mb: 3, width: 70, height: 70, borderRadius: 2,
                                         display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                                        bgcolor: 'rgba(198,40,40,0.06)',
+                                        bgcolor: 'rgba(198,40,40,0.04)',
                                     }}>{f.icon}</Box>
-                                    <Typography variant="h6" sx={{ mb: 1, fontSize: '1rem', fontWeight: 700, color: '#212121' }}>{f.title}</Typography>
-                                    <Typography variant="body2" sx={{ color: '#757575', lineHeight: 1.6 }}>{f.desc}</Typography>
+                                    <Typography variant="h6" sx={{ mb: 1.5, fontSize: '1.15rem', fontWeight: 800, color: '#212121' }}>{f.title}</Typography>
+                                    <Typography variant="body2" sx={{ color: '#6b7280', lineHeight: 1.7 }}>{f.desc}</Typography>
                                 </CardContent>
                             </Card>
                         </Grid>
@@ -224,7 +224,7 @@ const LandingPage = () => {
                                 Features
                             </Typography>
                             <Stack spacing={0.8}>
-                                {['QR Code Check-in', 'Real-time Analytics', 'Report Generation'].map(t => (
+                                {['Face Check-in', 'Real-time Analytics', 'Report Generation'].map(t => (
                                     <Typography key={t} variant="body2" sx={{ color: '#9E9E9E' }}>{t}</Typography>
                                 ))}
                             </Stack>

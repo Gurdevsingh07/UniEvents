@@ -1,14 +1,14 @@
 package com.university.eventmanagement.controller;
 
 import com.university.eventmanagement.dto.*;
-import com.university.eventmanagement.model.Role;
+
 import com.university.eventmanagement.service.AdminService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
+import com.university.eventmanagement.security.RequiresPermission;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,7 +16,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
+@RequiresPermission("MANAGE_USERS")
 @Tag(name = "Admin", description = "Admin management endpoints")
 public class AdminController {
 
@@ -29,6 +29,12 @@ public class AdminController {
             @RequestPart(value = "file", required = false) org.springframework.web.multipart.MultipartFile file) {
         return ResponseEntity
                 .ok(ApiResponse.success("Organizer created successfully", adminService.createOrganizer(request, file)));
+    }
+
+    @GetMapping("/users/{id}")
+    @Operation(summary = "Get user details by id")
+    public ResponseEntity<ApiResponse<UserResponse>> getUserById(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(adminService.getUserById(id)));
     }
 
     @PutMapping("/users/{id}")
@@ -56,18 +62,24 @@ public class AdminController {
     @GetMapping("/users/students")
     @Operation(summary = "Get all students")
     public ResponseEntity<ApiResponse<List<UserResponse>>> getStudents() {
-        return ResponseEntity.ok(ApiResponse.success(adminService.getUsersByRole(Role.STUDENT)));
+        return ResponseEntity.ok(ApiResponse.success(adminService.getUsersByRole("STUDENT")));
     }
 
     @GetMapping("/users/organizers")
     @Operation(summary = "Get all organizers")
     public ResponseEntity<ApiResponse<List<UserResponse>>> getOrganizers() {
-        return ResponseEntity.ok(ApiResponse.success(adminService.getUsersByRole(Role.ORGANIZER)));
+        return ResponseEntity.ok(ApiResponse.success(adminService.getUsersByRole("ORGANIZER")));
     }
 
     @GetMapping("/dashboard")
     @Operation(summary = "Get system-wide dashboard statistics")
     public ResponseEntity<ApiResponse<DashboardStats>> getDashboardStats() {
         return ResponseEntity.ok(ApiResponse.success(adminService.getDashboardStats()));
+    }
+
+    @GetMapping("/organizers-with-teams")
+    @Operation(summary = "Get all organizers and their associated teams across the system")
+    public ResponseEntity<ApiResponse<List<OrganizerWithTeamsResponse>>> getOrganizersWithTeams() {
+        return ResponseEntity.ok(ApiResponse.success(adminService.getOrganizersWithTeams()));
     }
 }

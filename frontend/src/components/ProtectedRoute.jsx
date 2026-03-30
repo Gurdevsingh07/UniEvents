@@ -2,7 +2,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { CircularProgress, Box } from '@mui/material';
 
-const ProtectedRoute = ({ children, roles }) => {
+const ProtectedRoute = ({ children, roles, permissions }) => {
     const { user, loading } = useAuth();
     const location = useLocation();
 
@@ -16,7 +16,12 @@ const ProtectedRoute = ({ children, roles }) => {
 
     if (!user) return <Navigate to="/login" replace />;
 
-    if (roles && !roles.includes(user.role)) return <Navigate to="/" replace />;
+    const hasRole = roles ? roles.includes(user.role) : true;
+    const hasPermission = permissions && user?.permissions ? permissions.some(p => user.permissions.includes(p)) : false;
+
+    if (!hasRole && !hasPermission) {
+        return <Navigate to="/" replace />;
+    }
     return children;
 };
 

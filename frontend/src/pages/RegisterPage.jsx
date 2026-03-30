@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
     Box, Typography, TextField, Button, Paper, Alert, CircularProgress,
-    InputAdornment, IconButton, Grid, Divider
+    InputAdornment, IconButton, Grid, Divider, FormControlLabel, Checkbox
 } from '@mui/material';
 import { Person, Email, Lock, Badge, School, Phone, Visibility, VisibilityOff } from '@mui/icons-material';
 import FaceScanner from '../components/FaceScanner';
@@ -15,18 +15,32 @@ const RegisterPage = () => {
     const [form, setForm] = useState({
         fullName: '', email: '', password: '',
         studentId: '', department: '', phone: '',
+        role: 'STUDENT',
         faceEmbedding: null
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [showPw, setShowPw] = useState(false);
+    const [consentGiven, setConsentGiven] = useState(false);
 
     const update = (field) => (e) => setForm({ ...form, [field]: e.target.value });
+
+    const getRoleLabel = () => {
+        switch (form.role) {
+            case 'ORGANIZER': return 'Organizer ID / Staff Number';
+            case 'ADMIN': return 'Administrator ID';
+            default: return 'Student ID / Roll Number';
+        }
+    };
 
     const handleNext = (e) => {
         e.preventDefault();
         if (form.password.length < 6) {
             setError('Password must be at least 6 characters');
+            return;
+        }
+        if (!consentGiven) {
+            setError('You must consent to biometric data processing to register.');
             return;
         }
         setError('');
@@ -37,11 +51,11 @@ const RegisterPage = () => {
         setLoading(true);
         setError('');
         try {
-            const registrationData = { ...form, faceEmbedding: embedding };
+            const registrationData = { ...form, faceEmbedding: embedding, consentGiven };
             await register(registrationData);
             navigate('/');
         } catch (err) {
-            setError(err.response?.data?.message || 'Registration failed. Please try again.');
+            setError(err.response?.data?.message || 'We could not create your account at this time. Please try again.');
             setStep(1);
         } finally {
             setLoading(false);
@@ -91,12 +105,34 @@ const RegisterPage = () => {
                         <TextField fullWidth label="Email" type="email" required value={form.email} onChange={update('email')} sx={{ mb: 2 }}
                             InputProps={{ startAdornment: <InputAdornment position="start"><Email sx={{ color: '#9E9E9E', fontSize: 20 }} /></InputAdornment> }} />
 
+                        <TextField
+                            select
+                            fullWidth
+                            label="Registration Type"
+                            required
+                            value={form.role}
+                            onChange={update('role')}
+                            sx={{ mb: 2 }}
+                            SelectProps={{ native: true }}
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <Person sx={{ color: '#9E9E9E', fontSize: 20 }} />
+                                    </InputAdornment>
+                                ),
+                            }}
+                        >
+                            <option value="STUDENT">Student</option>
+                            <option value="ORGANIZER">Organizer</option>
+                            <option value="ADMIN">Administrator</option>
+                        </TextField>
+
                         <Divider sx={{ my: 2.5, borderColor: '#E0E0E0' }} />
 
                         <Typography variant="caption" sx={{ color: '#C62828', textTransform: 'uppercase', letterSpacing: 1.5, fontWeight: 600, mb: 1.5, display: 'block' }}>
                             Academic Info
                         </Typography>
-                        <TextField fullWidth label="Student ID / Roll Number" required value={form.studentId} onChange={update('studentId')} sx={{ mb: 2 }}
+                        <TextField fullWidth label={getRoleLabel()} required value={form.studentId} onChange={update('studentId')} sx={{ mb: 2 }}
                             InputProps={{ startAdornment: <InputAdornment position="start"><Badge sx={{ color: '#9E9E9E', fontSize: 20 }} /></InputAdornment> }} />
                         <Grid container spacing={2} sx={{ mb: 2 }}>
                             <Grid item xs={12} sm={6}>
@@ -120,8 +156,21 @@ const RegisterPage = () => {
                                 startAdornment: <InputAdornment position="start"><Lock sx={{ color: '#9E9E9E', fontSize: 20 }} /></InputAdornment>,
                                 endAdornment: <InputAdornment position="end"><IconButton onClick={() => setShowPw(!showPw)} edge="end" size="small">{showPw ? <VisibilityOff /> : <Visibility />}</IconButton></InputAdornment>
                             }} />
+
+                        <Box sx={{ p: 2, mb: 3, bgcolor: '#FFF3E0', borderRadius: 1.5, border: '1px solid #FFCC80' }}>
+                            <FormControlLabel
+                                control={<Checkbox checked={consentGiven} onChange={(e) => setConsentGiven(e.target.checked)} color="warning" />}
+                                label={
+                                    <Typography variant="body2" sx={{ color: '#E65100', fontWeight: 600 }}>
+                                        I consent to the collection and processing of my biometric data (facial scans) for the purpose of event attendance verification.
+                                    </Typography>
+                                }
+                            />
+                        </Box>
+
                         <Button type="submit" fullWidth variant="contained" size="large"
-                            sx={{ mb: 2.5, py: 1.4, fontWeight: 700, bgcolor: '#C62828', color: '#FFFFFF', '&:hover': { bgcolor: '#B71C1C' } }}>
+                            disabled={!consentGiven}
+                            sx={{ mb: 2.5, py: 1.4, fontWeight: 700, bgcolor: '#C62828', color: '#FFFFFF', '&:hover': { bgcolor: '#B71C1C' }, '&.Mui-disabled': { bgcolor: '#E57373', color: '#FFEBEE' } }}>
                             Continue to Face Scan
                         </Button>
                     </form>

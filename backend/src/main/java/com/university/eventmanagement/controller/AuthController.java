@@ -8,26 +8,57 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import jakarta.servlet.http.HttpServletRequest;
+import io.github.bucket4j.Bucket;
+import io.github.bucket4j.Bandwidth;
+import java.time.Duration;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 @Tag(name = "Authentication", description = "Login and registration endpoints")
+@lombok.extern.slf4j.Slf4j
 public class AuthController {
 
     private final AuthService authService;
+    private final Map<String, Bucket> loginBuckets = new ConcurrentHashMap<>();
 
     @PostMapping("/login")
     @Operation(summary = "Login with email and password")
-    public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
-        System.out.println("DEBUG: Login attempt for email: " + request.getEmail());
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
+        String ipAddress = httpRequest.getRemoteAddr();
+        Bucket bucket = loginBuckets.computeIfAbsent(ipAddress, k -> Bucket.builder()
+                .addLimit(Bandwidth.builder().capacity(5).refillGreedy(5, Duration.ofMinutes(1)).build())
+                .build());
+
+        if (!bucket.tryConsume(1)) {
+            log.warn("Rate limit exceeded for login attempts from IP: {}", ipAddress);
+            return ResponseEntity.status(429).body(ApiResponse.error("Too many login attempts. Please wait a minute."));
+        }
+
+        log.debug("Login attempt for email: {}", request.getEmail());
         AuthResponse response = authService.login(request);
         return ResponseEntity.ok(ApiResponse.success("Login successful", response));
     }
 
+    private final Map<String, Bucket> registerBuckets = new ConcurrentHashMap<>();
+
     @PostMapping("/register")
     @Operation(summary = "Register a new student account")
-    public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request, HttpServletRequest httpRequest) {
+        String ipAddress = httpRequest.getRemoteAddr();
+        Bucket bucket = registerBuckets.computeIfAbsent(ipAddress, k -> Bucket.builder()
+                .addLimit(Bandwidth.builder().capacity(3).refillGreedy(3, Duration.ofMinutes(15)).build())
+                .build());
+
+        if (!bucket.tryConsume(1)) {
+            log.warn("Rate limit exceeded for registration attempts from IP: {}", ipAddress);
+            return ResponseEntity.status(429)
+                    .body(ApiResponse.error("Too many registration attempts. Please wait 15 minutes."));
+        }
+
         AuthResponse response = authService.register(request);
         return ResponseEntity.ok(ApiResponse.success("Registration successful", response));
     }
@@ -44,13 +75,12 @@ public class AuthController {
     public ResponseEntity<ApiResponse<UserResponse>> updateProfilePicture(
             @RequestPart("file") org.springframework.web.multipart.MultipartFile file) {
         try {
-            System.out.println("DEBUG: Received profile picture update request");
+            log.debug("Received profile picture update request");
             UserResponse response = authService.updateProfilePicture(file);
-            System.out.println("DEBUG: Profile picture updated successfully");
+            log.debug("Profile picture updated successfully");
             return ResponseEntity.ok(ApiResponse.success("Profile picture updated successfully", response));
         } catch (Exception e) {
-            System.err.println("ERROR: Failed to update profile picture");
-            e.printStackTrace();
+            log.error("Failed to update profile picture", e);
             throw e;
         }
     }

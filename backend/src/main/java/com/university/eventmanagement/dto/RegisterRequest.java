@@ -30,5 +30,9 @@ public class RegisterRequest {
     @Size(max = 15)
     private String phone;
 
+    @NotEmpty(message = "Face scan is required for registration")
     private java.util.List<Float> faceEmbedding;
+
+    @NotBlank(message = "Role is required")
+    private String role;
 }

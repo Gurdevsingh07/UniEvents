@@ -40,6 +40,8 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
+                .formLogin(form -> form.disable())
+                .httpBasic(basic -> basic.disable())
                 .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(e -> e.authenticationEntryPoint(
@@ -49,7 +51,6 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
                         .requestMatchers("/api/auth/me", "/api/auth/me/picture").authenticated()
                         .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                        .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/", "/index.html", "/static/**", "/css/**", "/js/**", "/images/**")
                         .permitAll()
@@ -59,10 +60,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/events").hasAnyRole("ADMIN", "ORGANIZER")
                         .requestMatchers(HttpMethod.PUT, "/api/events/**").hasAnyRole("ADMIN", "ORGANIZER")
-                        .requestMatchers(HttpMethod.DELETE, "/api/events/**").hasRole("ADMIN")
-                        .requestMatchers("/api/attendance/checkin").hasAnyRole("ADMIN", "ORGANIZER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/events/**").hasAnyRole("ADMIN", "ORGANIZER")
+                        .requestMatchers("/api/attendance/**").authenticated()
                         .requestMatchers("/api/events/*/check-in/face").permitAll()
-                        .requestMatchers("/api/reports/**").hasAnyRole("ADMIN", "ORGANIZER")
+                        .requestMatchers("/api/reports/**").authenticated()
                         .anyRequest().authenticated())
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
@@ -92,7 +93,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOriginPatterns(List.of("*"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);

@@ -22,7 +22,7 @@ export function getEventLiveStatus(event) {
 
     // Build start and end Date objects
     const startDateTime = parseDateTime(eventDate, startTime);
-    const endDateTime = endTime ? parseDateTime(eventDate, endTime) : null;
+    const endDateTime = endTime ? parseDateTime(event.endDate || eventDate, endTime) : (event.endDate ? parseDateTime(event.endDate, '23:59:59') : null);
 
     if (!startDateTime) {
         return { label: 'Upcoming', color: '#D32F2F', bgColor: 'rgba(211,47,47,0.08)', priority: 3 };

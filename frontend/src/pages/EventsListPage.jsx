@@ -26,8 +26,8 @@ const EventsListPage = () => {
     const filtered = events
         .filter(e => {
             if (filter === 'all') return e.status !== 'CANCELLED';
-            if (filter === 'upcoming') return e.status === 'UPCOMING' || e.status === 'ONGOING';
-            return e.status === 'COMPLETED';
+            if (filter === 'upcoming') return ['CREATED', 'REGISTRATION_OPEN', 'REGISTRATION_CLOSED', 'ATTENDANCE_ACTIVE', 'ATTENDANCE_PAUSED'].includes(e.status);
+            return ['ATTENDANCE_CLOSED', 'ARCHIVED'].includes(e.status);
         })
         .filter(e => search === '' ? true : e.title.toLowerCase().includes(search.toLowerCase()) || e.venue?.toLowerCase().includes(search.toLowerCase()));
 

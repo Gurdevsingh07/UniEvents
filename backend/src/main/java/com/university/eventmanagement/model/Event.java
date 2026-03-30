@@ -32,6 +32,8 @@ public class Event {
     @Column(nullable = false)
     private LocalDate eventDate;
 
+    private LocalDate endDate;
+
     @NotNull
     @Column(nullable = false)
     private LocalTime startTime;
@@ -54,9 +56,29 @@ public class Event {
     private Integer capacity;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(length = 20)
     @Builder.Default
-    private EventStatus status = EventStatus.UPCOMING;
+    private EventMode eventMode = EventMode.PRE_SCHEDULED;
+
+    @Column(name = "reminder_sent")
+    @Builder.Default
+    private boolean reminderSent = false;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_club_id")
+    private Club assignedClub;
+
+    @Column(name = "on_spot_registration_enabled")
+    @Builder.Default
+    private boolean onSpotRegistrationEnabled = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    @Builder.Default
+    private EventStatus status = EventStatus.CREATED;
+
+    @Column(name = "attendance_session_token", length = 100)
+    private String attendanceSessionToken;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by", nullable = false)

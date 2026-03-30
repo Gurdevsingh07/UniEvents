@@ -7,9 +7,9 @@ import {
     Divider, useMediaQuery, useTheme, Tooltip
 } from '@mui/material';
 import {
-    Menu as MenuIcon, Dashboard, Event, QrCodeScanner, Assessment,
+    Menu as MenuIcon, Dashboard, Event, FaceRetouchingNatural, Assessment,
     People, Logout, Home, CalendarMonth, HowToReg, AccountCircle,
-    School
+    School, Notifications, Assignment
 } from '@mui/icons-material';
 
 const DRAWER_WIDTH = 260;
@@ -31,46 +31,170 @@ const DashboardLayout = ({ children }) => {
         return '/student/profile';
     };
 
-    const getMenuItems = () => {
-        const items = [];
+    const getMenuGroups = () => {
+        const groups = [];
         if (user?.role === 'ADMIN') {
-            items.push(
-                { text: 'Dashboard', icon: <Dashboard />, path: '/admin' },
-                { text: 'Manage Events', icon: <Event />, path: '/admin/events' },
-                { text: 'Manage History', icon: <Assessment />, path: '/admin/history' },
-                { text: 'Manage Users', icon: <People />, path: '/admin/users' },
-                { text: 'Create Organizer', icon: <HowToReg />, path: '/admin/create-organizer' },
-                { text: 'My Profile', icon: <AccountCircle />, path: '/admin/profile' },
+            groups.push(
+                {
+                    section: null, items: [
+                        { text: 'Dashboard', icon: <Dashboard />, path: '/admin' },
+                        { text: 'Notices', icon: <Notifications />, path: '/admin/notices' },
+                    ]
+                },
+                {
+                    section: 'Events', items: [
+                        { text: 'Manage Events', icon: <Event />, path: '/admin/events' },
+                        { text: 'Event History', icon: <Assessment />, path: '/admin/history' },
+                        { text: 'Create Event', icon: <CalendarMonth />, path: '/admin/create-event' },
+                    ]
+                },
+                {
+                    section: 'Operations', items: [
+                        { text: 'Scanner', icon: <FaceRetouchingNatural />, path: '/organizer/scan' },
+                    ]
+                },
+                {
+                    section: 'Governance', items: [
+                        { text: 'Manage Users', icon: <People />, path: '/admin/users' },
+                        { text: 'Create Organizer', icon: <HowToReg />, path: '/admin/create-organizer' },
+                    ]
+                },
+                {
+                    section: 'Personal', items: [
+                        { text: 'My Profile', icon: <AccountCircle />, path: '/admin/profile' },
+                    ]
+                },
             );
         } else if (user?.role === 'ORGANIZER') {
-            items.push(
-                { text: 'Dashboard', icon: <Dashboard />, path: '/organizer' },
-                { text: 'My Events', icon: <Event />, path: '/organizer/events' },
-                { text: 'Event History', icon: <Assessment />, path: '/organizer/history' },
-                { text: 'Create Event', icon: <CalendarMonth />, path: '/organizer/create-event' },
-                { text: 'Scan QR', icon: <QrCodeScanner />, path: '/organizer/scan' },
-                { text: 'My Profile', icon: <AccountCircle />, path: '/organizer/profile' },
+            groups.push(
+                {
+                    section: null, items: [
+                        { text: 'Dashboard', icon: <Dashboard />, path: '/organizer' },
+                        { text: 'Notices', icon: <Notifications />, path: '/organizer/notices' },
+                    ]
+                },
+                {
+                    section: 'Events', items: [
+                        { text: 'My Events', icon: <Event />, path: '/organizer/events' },
+                        { text: 'Event History', icon: <Assessment />, path: '/organizer/history' },
+                        { text: 'Create Event', icon: <CalendarMonth />, path: '/organizer/create-event' },
+                    ]
+                },
+                {
+                    section: 'Operations', items: [
+                        { text: 'Scanner', icon: <FaceRetouchingNatural />, path: '/organizer/scan' },
+                    ]
+                },
+                {
+                    section: 'Governance', items: [
+                        { text: 'Team Management', icon: <People />, path: '/organizer/team' },
+                        { text: 'My Teams', icon: <People />, path: '/organizer/my-teams' },
+                    ]
+                },
+                {
+                    section: 'Personal', items: [
+                        { text: 'My Profile', icon: <AccountCircle />, path: '/organizer/profile' },
+                    ]
+                },
             );
         } else {
-            items.push(
-                { text: 'Dashboard', icon: <Dashboard />, path: '/student' },
-                { text: 'Browse Events', icon: <Event />, path: '/student/events' },
-                { text: 'My Registrations', icon: <CalendarMonth />, path: '/student/registrations' },
-                { text: 'Attendance History', icon: <Assessment />, path: '/student/attendance' },
-                { text: 'My Profile', icon: <AccountCircle />, path: '/student/profile' },
+            groups.push(
+                {
+                    section: null, items: [
+                        { text: 'Dashboard', icon: <Dashboard />, path: '/student' },
+                        { text: 'Notices', icon: <Notifications />, path: '/student/notices' },
+                    ]
+                },
+                {
+                    section: 'Events', items: [
+                        { text: 'Browse Events', icon: <Event />, path: '/student/events' },
+                        { text: 'My Registrations', icon: <CalendarMonth />, path: '/student/registrations' },
+                    ]
+                },
+                {
+                    section: 'Records', items: [
+                        { text: 'Attendance History', icon: <Assessment />, path: '/student/attendance' },
+                        { text: 'My Teams', icon: <People />, path: '/student/teams' },
+                    ]
+                },
+                {
+                    section: 'Personal', items: [
+                        { text: 'My Profile', icon: <AccountCircle />, path: '/student/profile' },
+                    ]
+                },
             );
         }
-        return items;
+
+        const volunteerItems = [];
+
+        if (user?.permissions?.includes('ACCESS_VOLUNTEER_PANEL')) {
+            volunteerItems.push({ text: 'Volunteer Tasks', icon: <Assignment />, path: '/volunteer' });
+        }
+
+        // For Students, all volunteer actions (Scanner, Reports) are now inside the Volunteer Tasks page as tabs.
+        // Only add Manage Teams if the student has canManageTeam (it's a separate management page)
+        if (user?.role === 'STUDENT' && user?.permissions?.includes('canManageTeam')) {
+            volunteerItems.push({ text: 'Manage Teams', icon: <People />, path: '/organizer/my-teams' });
+        }
+
+        if (volunteerItems.length > 0) {
+            groups.push({
+                section: user?.role === 'ADMIN' ? 'Task Management' : 'Volunteer Portal',
+                items: volunteerItems
+            });
+        }
+
+        return groups;
     };
 
-    const roleLabels = { ADMIN: 'Administrator', ORGANIZER: 'Organizer', STUDENT: 'Student' };
+    const portalLabels = { ADMIN: 'ADMIN PORTAL', ORGANIZER: 'ORGANIZER PORTAL', STUDENT: 'STUDENT PORTAL' };
+
+    const renderNavItem = (item) => {
+        const isActive = location.pathname === item.path;
+        return (
+            <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
+                <ListItemButton
+                    component={Link} to={item.path}
+                    selected={isActive}
+                    onClick={() => isMobile && setMobileOpen(false)}
+                    sx={{
+                        borderRadius: '0 4px 4px 0', py: 1.2,
+                        mr: 2,
+                        transition: 'all 0.15s ease',
+                        position: 'relative',
+                        '&.Mui-selected': {
+                            bgcolor: 'rgba(211, 47, 47, 0.08)',
+                            '& .MuiListItemIcon-root': { color: '#D32F2F' },
+                            '& .MuiListItemText-primary': { fontWeight: 900, color: '#FFFFFF' },
+                            '&::after': {
+                                content: '""',
+                                position: 'absolute',
+                                left: 0,
+                                top: '15%',
+                                height: '70%',
+                                width: 4,
+                                bgcolor: '#D32F2F',
+                                borderRadius: '0 4px 4px 0',
+                            }
+                        },
+                        '&:hover': { bgcolor: 'rgba(255,255,255,0.05)' },
+                    }}
+                >
+                    <ListItemIcon sx={{ minWidth: 36, color: isActive ? '#D32F2F' : '#94a3b8', transition: 'color 0.15s' }}>
+                        {isActive ? item.icon : <Box sx={{ opacity: 0.6 }}>{item.icon}</Box>}
+                    </ListItemIcon>
+                    <ListItemText primary={item.text} primaryTypographyProps={{ fontSize: '0.84rem', fontWeight: isActive ? 900 : 600, color: isActive ? '#FFFFFF' : '#94a3b8', letterSpacing: '0.2px' }} />
+                </ListItemButton>
+            </ListItem>
+        );
+    };
 
     const drawer = (
         <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#101010' }}>
             {/* Logo */}
             <Box sx={{ p: 3, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <Box sx={{ p: 0.8, borderRadius: 1, bgcolor: '#D32F2F', display: 'flex', boxShadow: '0 4px 8px rgba(211, 47, 47, 0.4)' }}>
+                    <Box sx={{ p: 0.8, borderRadius: 1, bgcolor: '#D32F2F', display: 'flex' }}>
                         <School sx={{ fontSize: 20, color: '#FFF' }} />
                     </Box>
                     <Typography variant="h6" component={Link} to="/" sx={{
@@ -80,53 +204,32 @@ const DashboardLayout = ({ children }) => {
                     </Typography>
                 </Box>
                 <Typography variant="caption" sx={{ color: '#6c757d', fontWeight: 600, display: 'block', mt: 0.5, letterSpacing: '0.5px' }}>
-                    STUDENT PORTAL
+                    {portalLabels[user?.role] || 'PORTAL'}
                 </Typography>
             </Box>
 
             {/* Navigation */}
-            <List sx={{ flex: 1, px: 2, py: 3 }}>
-                {getMenuItems().map((item) => {
-                    const isActive = location.pathname === item.path;
-                    return (
-                        <ListItem key={item.text} disablePadding sx={{ mb: 1 }}>
-                            <ListItemButton
-                                component={Link} to={item.path}
-                                selected={isActive}
-                                onClick={() => isMobile && setMobileOpen(false)}
-                                sx={{
-                                    borderRadius: '0 4px 4px 0', py: 1.5,
-                                    mb: 0.5, mr: 2,
-                                    transition: 'all 0.2s ease',
-                                    position: 'relative',
-                                    '&.Mui-selected': {
-                                        bgcolor: 'rgba(211, 47, 47, 0.08)',
-                                        '& .MuiListItemIcon-root': { color: '#D32F2F' },
-                                        '& .MuiListItemText-primary': { fontWeight: 900, color: '#FFFFFF' },
-                                        '&::after': {
-                                            content: '""',
-                                            position: 'absolute',
-                                            left: 0,
-                                            top: '15%',
-                                            height: '70%',
-                                            width: 4,
-                                            bgcolor: '#D32F2F',
-                                            borderRadius: '0 4px 4px 0',
-                                            boxShadow: '0 0 12px rgba(211, 47, 47, 0.6)'
-                                        }
-                                    },
-                                    '&:hover': { bgcolor: 'rgba(255,255,255,0.05)' },
-                                }}
-                            >
-                                <ListItemIcon sx={{ minWidth: 38, color: isActive ? '#D32F2F' : '#94a3b8', transition: 'color 0.2s' }}>
-                                    {isActive ? item.icon : <Box sx={{ opacity: 0.6 }}>{item.icon}</Box>}
-                                </ListItemIcon>
-                                <ListItemText primary={item.text} primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: isActive ? 900 : 600, color: isActive ? '#FFFFFF' : '#94a3b8', letterSpacing: '0.2px' }} />
-                            </ListItemButton>
-                        </ListItem>
-                    );
-                })}
-            </List>
+            <Box sx={{ flex: 1, px: 2, py: 2, overflowY: 'auto' }}>
+                {getMenuGroups().map((group, gi) => (
+                    <Box key={gi}>
+                        {group.section && (
+                            <Typography variant="caption" sx={{
+                                display: 'block', color: '#6c757d', fontWeight: 700,
+                                textTransform: 'uppercase', letterSpacing: '1.5px',
+                                fontSize: '0.65rem', px: 1.5, pt: gi === 0 ? 0 : 2, pb: 1,
+                            }}>
+                                {group.section}
+                            </Typography>
+                        )}
+                        {gi > 0 && !group.section && (
+                            <Divider sx={{ borderColor: 'rgba(255,255,255,0.06)', my: 1.5 }} />
+                        )}
+                        <List disablePadding>
+                            {group.items.map(renderNavItem)}
+                        </List>
+                    </Box>
+                ))}
+            </Box>
 
             {/* User Panel */}
             <Divider sx={{ borderColor: '#333333' }} />
@@ -141,7 +244,7 @@ const DashboardLayout = ({ children }) => {
                 >
                     <Avatar
                         src={user?.profilePicture ? `/${user.profilePicture}?t=${new Date().getTime()}` : undefined}
-                        sx={{ width: 36, height: 36, bgcolor: '#D32F2F', fontSize: '0.85rem', fontWeight: 900, boxShadow: '0 2px 8px rgba(211, 47, 47, 0.3)' }}
+                        sx={{ width: 36, height: 36, bgcolor: '#D32F2F', fontSize: '0.85rem', fontWeight: 900 }}
                     >
                         {user?.fullName?.charAt(0)}
                     </Avatar>
@@ -149,7 +252,7 @@ const DashboardLayout = ({ children }) => {
                         <Typography variant="body2" sx={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#FFFFFF' }}>
                             {user?.fullName}
                         </Typography>
-                        <Typography variant="caption" sx={{ color: '#9E9E9E' }}>{roleLabels[user?.role]}</Typography>
+                        <Typography variant="caption" sx={{ color: '#9E9E9E' }}>{user?.role?.charAt(0) + user?.role?.slice(1).toLowerCase()}</Typography>
                     </Box>
                 </Box>
             </Box>
@@ -168,11 +271,10 @@ const DashboardLayout = ({ children }) => {
             <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', width: { md: `calc(100% - ${DRAWER_WIDTH}px)` } }}>
                 <AppBar position="sticky" sx={{
                     zIndex: theme.zIndex.drawer - 1,
-                    bgcolor: 'rgba(255,255,255,0.8)',
-                    backdropFilter: 'blur(12px)',
-                    borderBottom: '1px solid rgba(0,0,0,0.05)',
+                    bgcolor: '#FFFFFF',
+                    borderBottom: '1px solid #E0E0E0',
                     boxShadow: 'none',
-                    color: '#1a1d23'
+                    color: '#212121'
                 }}>
                     <Toolbar>
                         {isMobile && (
@@ -197,7 +299,7 @@ const DashboardLayout = ({ children }) => {
                         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}
                             transformOrigin={{ horizontal: 'right', vertical: 'top' }}
                             anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-                            PaperProps={{ sx: { mt: 1.5, minWidth: 220, borderRadius: 1.5, boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0' } }}
+                            PaperProps={{ sx: { mt: 1.5, minWidth: 220, borderRadius: 1.5, boxShadow: '0 4px 12px rgba(0,0,0,0.05)', border: '1px solid #E0E0E0' } }}
                         >
                             <Box sx={{ px: 2, py: 1.5, borderBottom: '1px solid #E0E0E0' }}>
                                 <Typography variant="body2" sx={{ fontWeight: 600, color: '#212121' }}>{user?.fullName}</Typography>

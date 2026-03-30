@@ -21,6 +21,9 @@ public class EventRequest {
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate eventDate;
 
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate endDate;
+
     @NotNull(message = "Start time is required")
     @JsonFormat(pattern = "HH:mm")
     private LocalTime startTime;
@@ -40,4 +43,12 @@ public class EventRequest {
     @NotNull(message = "Capacity is required")
     @Min(value = 1, message = "Capacity must be at least 1")
     private Integer capacity;
+
+    private String eventMode; // PRE_SCHEDULED or INSTANT
+
+    private Boolean onSpotRegistrationEnabled;
+
+    private Long assignedClubId;
+
+    private java.util.List<Long> assignedTeamIds;
 }

@@ -15,6 +15,7 @@ public class EventResponse {
     private String title;
     private String description;
     private LocalDate eventDate;
+    private LocalDate endDate;
     private LocalTime startTime;
     private LocalTime endTime;
     private LocalTime entryStartTime;
@@ -27,4 +28,10 @@ public class EventResponse {
     private long registeredCount;
     private long attendedCount;
     private LocalDateTime createdAt;
+    private String eventMode;
+    private Boolean onSpotRegistrationEnabled;
+    private Long assignedClubId;
+    private String assignedClubName;
+    private java.util.List<TeamBasicDTO> assignedTeams;
+    private String attendanceSessionToken;
 }

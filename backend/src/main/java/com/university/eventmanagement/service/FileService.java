@@ -7,10 +7,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
 public class FileService {
+
+    private static final Set<String> ALLOWED_EXTENSIONS = Set.of(".jpg", ".jpeg", ".png", ".gif", ".webp");
+    private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
+            "image/jpeg", "image/png", "image/gif", "image/webp");
 
     private final Path fileStorageLocation;
 
@@ -24,13 +29,23 @@ public class FileService {
     }
 
     public String saveFile(MultipartFile file, String subDir) {
-        // Normalize file name
-        String originalFileName = org.springframework.util.StringUtils.cleanPath(file.getOriginalFilename());
+        String rawName = file.getOriginalFilename();
+        String originalFileName = org.springframework.util.StringUtils.cleanPath(
+                rawName != null ? rawName : "unknown");
         String fileExtension = "";
 
         int i = originalFileName.lastIndexOf('.');
         if (i > 0) {
-            fileExtension = originalFileName.substring(i);
+            fileExtension = originalFileName.substring(i).toLowerCase();
+        }
+
+        // Validate file type
+        if (!ALLOWED_EXTENSIONS.contains(fileExtension)) {
+            throw new RuntimeException("File type not allowed. Accepted types: " + ALLOWED_EXTENSIONS);
+        }
+        String contentType = file.getContentType();
+        if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType.toLowerCase())) {
+            throw new RuntimeException("Invalid file content type. Only image files are allowed.");
         }
 
         String fileName = UUID.randomUUID().toString() + fileExtension;

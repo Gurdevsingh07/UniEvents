@@ -1,6 +1,7 @@
 package com.university.eventmanagement.dto;
 
 import lombok.*;
+import java.util.List;
 
 @Getter
 @Setter
@@ -17,4 +18,5 @@ public class UserResponse {
     private String role;
     private String profilePicture;
     private String createdAt;
+    private List<String> permissions;
 }

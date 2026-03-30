@@ -26,6 +26,14 @@ public class AttendanceLog {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Column(length = 20)
+    private String method; // e.g. FACE_SCAN, MANUAL, QR_SCAN
+
+    @Column(name = "scanned_by_user_id")
+    private Long scannedByUserId;
+
+    private Float confidenceScore;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime checkedInAt;
 

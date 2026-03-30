@@ -27,8 +27,15 @@ public class Registration {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(nullable = false, unique = true, length = 500)
-    private String qrCodeData;
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    @Builder.Default
+    private RegistrationType registrationType = RegistrationType.NORMAL;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    @Builder.Default
+    private RegistrationStatus status = RegistrationStatus.CONFIRMED;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime registeredAt;
@@ -37,4 +44,11 @@ public class Registration {
     protected void onCreate() {
         registeredAt = LocalDateTime.now();
     }
+
+    private LocalDateTime cancelledAt;
+
+    private String cancellationReason;
+
+    // Waitlist position (1 = first in queue); null when CONFIRMED
+    private Integer waitlistPosition;
 }
