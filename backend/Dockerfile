@@ -9,6 +9,23 @@ RUN mvn clean package -DskipTests -B
 # Runtime stage
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
+
+# Create non-root user for security
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+# Create directories for uploads and data with correct ownership
+RUN mkdir -p /app/uploads /app/data && chown -R appuser:appgroup /app
+
+COPY --from=build --chown=appuser:appgroup /app/target/*.jar app.jar
+
+USER appuser
+
+# Render sets PORT env var automatically
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+
+# Production-optimized JVM flags
+ENTRYPOINT ["java", \
+  "-XX:+UseContainerSupport", \
+  "-XX:MaxRAMPercentage=75.0", \
+  "-Djava.security.egd=file:/dev/./urandom", \
+  "-jar", "app.jar"]

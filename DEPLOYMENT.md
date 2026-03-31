@@ -1,169 +1,166 @@
-# Deployment Guide — University Event Management System
+# 🚀 UniEvents – Deployment Guide
 
-## Table of Contents
-1. [Deploy with Docker (VPS/EC2)](#1-deploy-with-docker-vpsec2)
-2. [Backend on Railway](#2-backend-on-railway)
-3. [Backend on Render](#3-backend-on-render)
-4. [Frontend on Vercel](#4-frontend-on-vercel)
-5. [Frontend on Netlify](#5-frontend-on-netlify)
-6. [MySQL Hosting](#6-mysql-hosting)
-7. [Production Configuration](#7-production-configuration)
+> Deploy the frontend on **Vercel** and the backend on **Render**.
 
 ---
 
-## 1. Deploy with Docker (VPS/EC2)
+## Architecture Overview
 
-### On AWS EC2 / DigitalOcean / Any VPS:
-
-```bash
-# 1. SSH into your server
-ssh user@your-server-ip
-
-# 2. Install Docker & Docker Compose
-sudo apt update && sudo apt install -y docker.io docker-compose
-
-# 3. Clone/upload project
-git clone <your-repo-url>
-cd university-event-management-system
-
-# 4. Configure environment
-cp .env.example .env
-nano .env  # Edit with production values
-
-# 5. Start all services
-docker-compose up -d --build
-
-# 6. Verify
-docker-compose ps
-curl http://localhost:8080/api/events
+```
+┌──────────────────────┐         ┌───────────────────────┐
+│   Vercel (Frontend)  │────────▶│   Render (Backend)    │
+│   React / Vite SPA   │  HTTPS  │   Spring Boot API     │
+│                      │◀────────│                       │
+│   vercel.json        │  JSON   │   PostgreSQL (Render)  │
+│   rewrites /api/*    │         │   Managed Database     │
+└──────────────────────┘         └───────────────────────┘
 ```
 
-Your app will be live at `http://your-server-ip`.
+---
+
+## Prerequisites
+
+- A **GitHub** account with this repository pushed.
+- A [Vercel](https://vercel.com) account (free tier is fine).
+- A [Render](https://render.com) account (free tier is fine).
 
 ---
 
-## 2. Backend on Railway
+## Step 1: Deploy Backend on Render
 
-1. Push backend code to a GitHub repository
-2. Go to [railway.app](https://railway.app) → New Project → Deploy from GitHub
-3. Select your repo, point to the `backend/` directory
-4. Add a **MySQL** service from Railway's Add-ons
-5. Set environment variables:
-   - `DB_URL` = Railway MySQL connection URL (convert to JDBC format)
-   - `DB_USERNAME` = from Railway MySQL
-   - `DB_PASSWORD` = from Railway MySQL
-   - `JWT_SECRET` = your secret key
-   - `CORS_ORIGINS` = your frontend URL
-6. Railway auto-detects the `pom.xml` and builds with Maven
-7. Note the generated URL (e.g., `https://your-app.up.railway.app`)
+### Option A: One-Click Blueprint (Recommended)
 
----
+1. Push this codebase to your GitHub repository.
+2. Go to [Render Blueprints](https://dashboard.render.com/blueprints).
+3. Click **New Blueprint Instance**.
+4. Connect your GitHub repository.
+5. Render will detect `render.yaml` and automatically create:
+   - A **Web Service** (your Spring Boot backend)
+   - A **PostgreSQL Database**
+6. Wait for the build to complete (~5-10 minutes on first deploy).
 
-## 3. Backend on Render
+### Option B: Manual Setup
 
-1. Push to GitHub
-2. Go to [render.com](https://render.com) → New Web Service
-3. Connect your repo, set:
-   - **Root Directory**: `backend`
-   - **Build Command**: `mvn clean package -DskipTests`
-   - **Start Command**: `java -jar target/*.jar`
-   - **Environment**: `Java`
-4. Add environment variables (same as Railway above)
-5. Deploy — Render provides a URL like `https://your-app.onrender.com`
+#### 1. Create a PostgreSQL Database
 
----
-
-## 4. Frontend on Vercel
-
-```bash
-# 1. Install Vercel CLI
-npm i -g vercel
-
-# 2. Navigate to frontend
-cd frontend
-
-# 3. Set environment variable
-# Create .env.production:
-echo "VITE_API_URL=https://your-backend-url.com" > .env.production
-
-# 4. Deploy
-vercel --prod
-```
-
-Or via Vercel Dashboard:
-1. Import your Git repo
-2. Set **Root Directory** to `frontend`
-3. Set **Framework Preset** to Vite
-4. Add environment variable: `VITE_API_URL` = your backend URL
-5. Deploy
-
----
-
-## 5. Frontend on Netlify
-
-1. Go to [netlify.com](https://netlify.com) → Add New Site → Import from Git
+1. Go to [Render Dashboard](https://dashboard.render.com) → **New** → **PostgreSQL**.
 2. Set:
-   - **Base Directory**: `frontend`
+   - **Name**: `unievents-db`
+   - **Database**: `unievents`
+   - **User**: `unievents_user`
+   - **Region**: Oregon (or your closest)
+   - **Plan**: Free
+3. Click **Create Database**.
+4. Once created, copy the **Internal Database URL** from the database info page.
+
+#### 2. Create the Web Service
+
+1. Go to **New** → **Web Service**.
+2. Connect your GitHub repository.
+3. Configure:
+   - **Name**: `unievents-backend`
+   - **Region**: Same as your database
+   - **Runtime**: Docker
+   - **Dockerfile Path**: `./backend/Dockerfile`
+   - **Docker Context**: `./backend`
+   - **Plan**: Free
+4. Add these **Environment Variables**:
+
+| Key              | Value                                              |
+|------------------|----------------------------------------------------|
+| `PORT`           | `8080`                                             |
+| `DB_URL`         | `jdbc:postgresql://<host>:<port>/<dbname>` (from DB info) |
+| `DB_DRIVER`      | `org.postgresql.Driver`                            |
+| `JPA_DIALECT`    | `org.hibernate.dialect.PostgreSQLDialect`          |
+| `DB_USERNAME`    | (from database info page)                          |
+| `DB_PASSWORD`    | (from database info page)                          |
+| `HIBERNATE_DDL`  | `update`                                           |
+| `JWT_SECRET`     | (click **Generate** to create a random 64-char key)|
+| `CORS_ORIGINS`   | `https://uni-events-swart.vercel.app`              |
+| `H2_CONSOLE_ENABLED` | `false`                                       |
+
+> **Important**: The `DB_URL` from Render looks like `postgres://user:pass@host/dbname`.
+> You need to convert it to JDBC format: `jdbc:postgresql://host:port/dbname`
+
+5. Click **Create Web Service** and wait for the first deploy.
+
+---
+
+## Step 2: Deploy Frontend on Vercel
+
+1. Go to [Vercel Dashboard](https://vercel.com/dashboard) → **Add New** → **Project**.
+2. Import your GitHub repository.
+3. Configure:
+   - **Framework Preset**: Vite
+   - **Root Directory**: `frontend`
    - **Build Command**: `npm run build`
-   - **Publish Directory**: `frontend/dist`
-3. Add environment variable: `VITE_API_URL` = your backend URL
-4. Add `_redirects` file to `frontend/public/`:
-   ```
-   /*    /index.html   200
-   ```
-5. Deploy
+   - **Output Directory**: `dist`
+4. Add this **Environment Variable**:
+
+| Key              | Value                                              |
+|------------------|----------------------------------------------------|
+| `VITE_API_URL`   | `https://unievents-1sv4.onrender.com` (your Render URL) |
+
+5. Click **Deploy**.
 
 ---
 
-## 6. MySQL Hosting
+## Step 3: Verify the Deployment
 
-### Option A: PlanetScale (Free Tier)
-1. Create account at [planetscale.com](https://planetscale.com)
-2. Create a database → get connection string
-3. Convert to JDBC format: `jdbc:mysql://host:port/dbname?sslMode=VERIFY_IDENTITY`
+1. Open your Vercel URL: `https://uni-events-swart.vercel.app`
+2. Try logging in or registering.
+3. Open the browser **Developer Tools** (F12) → **Network** tab.
+4. Verify that API calls to `/api/auth/login` return a **200** status (not 404 or CORS error).
 
-### Option B: Railway MySQL
-1. Add MySQL service in Railway dashboard
-2. Use the provided credentials
+### Troubleshooting
 
-### Option C: AWS RDS
-1. Create MySQL RDS instance
-2. Configure security group to allow your backend IP
-3. Use the endpoint as `DB_URL`
-
-### Option D: Docker on VPS
-Already included in `docker-compose.yml`
+| Problem                        | Solution                                           |
+|--------------------------------|----------------------------------------------------|
+| `404` on API calls             | Check that `vercel.json` rewrites point to correct Render URL |
+| CORS errors                    | Verify `CORS_ORIGINS` env var on Render matches your Vercel domain exactly |
+| Backend is sleeping (slow)     | Render free tier sleeps after 15 min. First request takes ~30s to wake up. |
+| Database connection error      | Verify `DB_URL` is in JDBC format: `jdbc:postgresql://...` not `postgres://...` |
+| Build fails on Render          | Check the build logs. Ensure `Dockerfile` is at `./backend/Dockerfile` |
 
 ---
 
-## 7. Production Configuration
+## Environment Variable Reference
 
-### Backend CORS Setup
-In production, update `CORS_ORIGINS` to only allow your frontend domain:
-```
-CORS_ORIGINS=https://your-frontend-domain.vercel.app
-```
+### Backend (Render)
 
-### JWT Secret
-Generate a strong secret for production:
+| Variable             | Required | Description                                |
+|----------------------|----------|--------------------------------------------|
+| `PORT`               | Yes      | Server port (Render sets this automatically) |
+| `DB_URL`             | Yes      | JDBC PostgreSQL connection string           |
+| `DB_DRIVER`          | Yes      | `org.postgresql.Driver`                    |
+| `JPA_DIALECT`        | Yes      | `org.hibernate.dialect.PostgreSQLDialect`  |
+| `DB_USERNAME`        | Yes      | Database username                          |
+| `DB_PASSWORD`        | Yes      | Database password                          |
+| `JWT_SECRET`         | Yes      | Random 64+ character string               |
+| `CORS_ORIGINS`       | Yes      | Comma-separated allowed origins            |
+| `HIBERNATE_DDL`      | No       | Default: `update`                          |
+| `H2_CONSOLE_ENABLED` | No       | Default: `false`                           |
+
+### Frontend (Vercel)
+
+| Variable        | Required | Description                        |
+|-----------------|----------|------------------------------------|
+| `VITE_API_URL`  | Yes      | Backend URL (e.g., `https://unievents-1sv4.onrender.com`) |
+
+---
+
+## Local Development
+
+For local development, no changes needed! The app falls back to:
+- **H2** file-based database (no setup required)
+- **localhost:5173** → proxy to **localhost:8080** via Vite config
+
 ```bash
-openssl rand -base64 64
-```
+# Terminal 1: Start backend
+cd backend
+./mvnw spring-boot:run
 
-### Environment Variables Checklist
-| Variable | Description |
-|----------|-------------|
-| `DB_URL` | JDBC MySQL connection string |
-| `DB_USERNAME` | Database username |
-| `DB_PASSWORD` | Database password |
-| `JWT_SECRET` | JWT signing key (256+ bits) |
-| `JWT_EXPIRATION` | Token expiry in ms (default: 86400000 = 24h) |
-| `CORS_ORIGINS` | Comma-separated allowed frontend origins |
-| `VITE_API_URL` | Backend base URL (frontend) |
-
-### SSL/HTTPS
-For production, use a reverse proxy (Nginx/Caddy) with Let's Encrypt:
-```bash
-sudo apt install certbot python3-certbot-nginx
-sudo certbot --nginx -d your-domain.com
+# Terminal 2: Start frontend
+cd frontend
+npm run dev:client
 ```

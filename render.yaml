@@ -1,0 +1,55 @@
+# =============================================
+# Render Blueprint - UniEvents
+# https://render.com/docs/blueprint-spec
+# =============================================
+# To use: Push this file to your repo root and
+# go to https://dashboard.render.com/blueprints
+# Click "New Blueprint Instance" and connect to this repo.
+
+services:
+  # ---- Backend API (Spring Boot) ----
+  - type: web
+    name: unievents-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    region: oregon
+    plan: free
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: DB_URL
+        fromDatabase:
+          name: unievents-db
+          property: connectionURI
+        # Render provides a PostgreSQL URI. We need to convert it to JDBC format.
+        # Use the generateValue below or set manually in dashboard:
+        # jdbc:postgresql://<host>:<port>/<dbname>
+      - key: DB_DRIVER
+        value: org.postgresql.Driver
+      - key: JPA_DIALECT
+        value: org.hibernate.dialect.PostgreSQLDialect
+      - key: DB_USERNAME
+        fromDatabase:
+          name: unievents-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: unievents-db
+          property: password
+      - key: HIBERNATE_DDL
+        value: update
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: https://uni-events-swart.vercel.app
+      - key: H2_CONSOLE_ENABLED
+        value: "false"
+
+databases:
+  - name: unievents-db
+    plan: free
+    databaseName: unievents
+    user: unievents_user
+    region: oregon
