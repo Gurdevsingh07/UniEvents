@@ -32,6 +32,17 @@ public class DataSeeder implements CommandLineRunner {
 
         @Override
         public void run(String... args) {
+                try {
+                        log.info("🌱 DataSeeder: Starting database seeding...");
+                        seedData();
+                        log.info("🌱 DataSeeder: Seeding completed successfully.");
+                } catch (Exception e) {
+                        log.error("❌ DataSeeder: Failed to seed database. The app will still start, " +
+                                  "but default users may not exist. Error: {}", e.getMessage());
+                }
+        }
+
+        private void seedData() {
                 Department adminDept = departmentRepository.findByName("Administration")
                                 .orElseGet(() -> departmentRepository
                                                 .save(Department.builder().name("Administration").code("ADMIN")
